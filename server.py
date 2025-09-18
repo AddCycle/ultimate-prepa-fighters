@@ -41,10 +41,12 @@ def receive_loop():
                 pid = next_id
                 next_id += 1
                 players[addr] = {'id': pid, 'x': 100, 'y': GROUND_Y,
-                                 'w': 64, 'h': 64,
+                                 'w': 32, 'h': 64,
                                  'vx': 0, 'vy': 0, 'on_ground': True,
                                  'speed': rand.randint(400, 600),
-                                 'last_seen': time.time()}
+                                 'last_seen': time.time(),
+                                 'facing': "right",
+                                 'score': 0}
                 # sending player ID immediately after HELLO
                 server.sendto(f"ID:{pid}\n".encode(), addr)
                 print(f"[SERVER] New player {pid} from {addr}")
@@ -57,13 +59,43 @@ def receive_loop():
                     print(f"[SERVER] Player {player['id']} alive")
                 if cmd == "LEFT":
                     player['vx'] = -player['speed']
+                    player['facing'] = "left"
                 elif cmd == "RIGHT":
                     player['vx'] = player['speed']
+                    player['facing'] = "right"
                 elif cmd == "STOP":
                     player['vx'] = 0
                 elif cmd == "JUMP" and player['on_ground']: # jump
                     player['vy'] = JUMP_SPEED
                     player['on_ground'] = False
+                elif cmd == "MELEE": # melee attack
+                    attacker = player
+                    # define hit area in front of attacker
+                    melee_width = 80
+                    melee_height = 64
+                    facing_right = attacker.get('facing', 'right') == 'right'
+                    if facing_right:
+                      hit_x = attacker['x'] + attacker['w']
+                    else:
+                      hit_x = attacker['x'] - melee_width
+                    hit_y = attacker['y']
+                    hit_rect = (hit_x, hit_y, melee_width, melee_height)
+    
+                    # check collisions with other players
+                    for other_addr, other in players.items():
+                      if other_addr == addr:
+                        continue  # skip self
+                      ox, oy, ow, oh = other['x'], other['y'], other['w'], other['h']
+                      # simple AABB collision
+                      if (hit_rect[0] < ox + ow and hit_rect[0] + hit_rect[2] > ox and
+                        hit_rect[1] < oy + oh and hit_rect[1] + hit_rect[3] > oy):
+                          print(f"[SERVER] Player {attacker['id']} hit Player {other['id']}!")
+                          other['last_hit'] = time.time()  # optional, store hit info for debug
+                          attacker['score'] += 1 # incrementing the attacker score
+                    # store attack info for rendering debug
+                    attacker['last_melee'] = time.time()
+                    attacker['melee_rect'] = hit_rect
+                    print(f"player {player['id']} attacking")
                 elif cmd == "QUIT": # client disconnect
                     pid = players[addr]['id']
                     print(f"[SERVER] Player {pid} quit")
@@ -93,6 +125,10 @@ def physics_loop():
                   p['x'] = 0
                 elif p['x'] > SCREEN_WIDTH - p['w']:
                   p['x'] = SCREEN_WIDTH - p['w']
+
+                if 'last_melee' in p and time.time() - p['last_melee'] > 0.5:
+                  del p['last_melee']
+                  del p['melee_rect']
             
             # handling client timeout (TODO : move this part)
             now = time.time()
@@ -105,7 +141,16 @@ def physics_loop():
             # broadcasting data to each player the everyone state
             send_dt += dt
             if send_dt >= 1 / SEND_RATE:
-                state = ";".join(f"{p['id']},{p['x']},{p['y']}" for p in players.values())
+
+                state_parts = []
+                for p in players.values():
+                  part = f"{p['id']},{p['x']},{p['y']},{p['score']}"
+                  if 'melee_rect' in p:
+                    mx, my, mw, mh = p['melee_rect']
+                    part += f",{mx},{my},{mw},{mh}"
+                  state_parts.append(part)
+                state = ";".join(state_parts)
+
                 for addr in players.keys():
                     server.sendto((state + "\n").encode(), addr)
                 send_dt = 0
