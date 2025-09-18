@@ -4,8 +4,8 @@ import pygame
 import time
 import sys
 
-IP = "localhost" # FIXME
-# IP = "141.253.99.233"
+# IP = "localhost"
+IP = "141.253.99.233"
 PORT = 5000
 FPS = 144 # clamp
 
