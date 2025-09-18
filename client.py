@@ -205,12 +205,13 @@ while running:
       prev_positions[pid] = (x, y)
 
       color = "red" if pid == my_id else "blue"  # self in red, others in blue
+      score_color = "green" if pid == my_id else "white"  # self in red, others in blue
       if debug:
         pygame.draw.rect(screen, color, (x, y, 32, 64))
 
       # render sprite (fix width call)
       screen.blit(player_sprite, (x - (player_sprite.get_width() // 4), y))
-      render_text_at(screen, "Score: " + str(data['score']), X // 2, y_offset, "white")
+      render_text_at(screen, "Score: " + str(data['score']), X // 2, y_offset, score_color)
       y_offset += 30
 
       # debug: melee rect
