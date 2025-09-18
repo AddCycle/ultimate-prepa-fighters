@@ -3,8 +3,8 @@ import threading
 import pygame
 import time
 
-IP = "localhost"
-# IP = "141.253.99.233"
+# IP = "localhost"
+IP = "141.253.99.233"
 PORT = 5000
 FPS = 144 # clamp
 
