@@ -1,5 +1,8 @@
 <h1 align="center">Ultimate Prepa Fighters</h1>
 
+<!-- TODO : make the icon image bigger -->
+<img src="icon.png" width="32" height="32" style="image-rendering: pixelated;"/>
+
 Original idea from: **JeanRobertPerez**
 
 How to play:
@@ -19,3 +22,6 @@ If you enjoy my work, you can support-me here:
 <br/>
 <br/>
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/G2G11DFJ25)
+
+![icon](presentation/screenshot1.png)
+![icon](presentation/screenshot2.png)
