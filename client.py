@@ -5,6 +5,8 @@ import time
 import sys
 from game.settings import *
 from game.player import Player
+from ui import renderer
+from ui import menu
 
 # Client pygame init
 pygame.init()
@@ -28,55 +30,12 @@ def center_text_rect(surface: pygame.Rect, y: int) -> pygame.Rect:
     return surface
 
 
-def text(text: str, color: str) -> pygame.Surface:
-    return font.render(text, True, color, "black")
-
-
-def render_text_at(
-    surface: pygame.Surface, text: str, x: int, y: int, color: str, bg="black"
-) -> None:
-    sf = font.render(text, True, color, "black")
-    rect = sf.get_rect()
-    rect.center = (x, y)
-    surface.blit(sf, rect)
-
-
-quit_text = text("QUIT", "white")
-connect_text = text("CONNECT", "white")
-
 # sprite loading
 player_sprite = pygame.image.load("icon.png").convert_alpha()
 player_sprite = pygame.transform.scale(player_sprite, (64, 64))
 
-selecting = True
-choice = -1
-
-# main MENU
-while selecting:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            break
-
-    keys = pygame.key.get_just_pressed()
-    if keys[pygame.K_DOWN]:
-        choice = 0
-        quit_text = text("QUIT", "green")
-        connect_text = text("CONNECT", "white")
-    elif keys[pygame.K_UP]:
-        choice = 1
-        quit_text = text("QUIT", "white")
-        connect_text = text("CONNECT", "green")
-    elif keys[pygame.K_SPACE]:
-        selecting = False
-        break
-
-    render_text_at(screen, "Ultimate Prepa Fighters", X // 2, 50, "white")
-    screen.blit(connect_text, center_text_rect(connect_text.get_rect(), Y // 2))
-    screen.blit(quit_text, center_text_rect(quit_text.get_rect(), Y // 2 + 200))
-    screen.blit(player_sprite, (X // 2, 100))
-    pygame.display.flip()  # updating screen
-
+# main menu selection
+choice = menu.show_main_menu(screen, player_sprite)
 if choice == 0:
     pygame.quit()
     sys.exit()
@@ -96,7 +55,7 @@ prev_positions = {}
 # dev mode (showing collisions...)
 debug = False
 
-# inital message to query a player id
+# inital message to query a player id from server
 client.sendto("HELLO".encode(), server_addr)
 
 
@@ -208,22 +167,7 @@ while running:
     pygame.draw.rect(screen, "purple", (0, 563, screen.get_width(), 500))  # ground
 
     # trying to interpolate other players positions (for smoothing lags)
-    y_offset = 10
-    for pid, p in all_players.items():
-        x, y = p.x, p.y
-
-        color = "red" if pid == my_id else "blue"
-        score_color = "green" if pid == my_id else "white"
-        if debug:
-            pygame.draw.rect(screen, color, (x, y, p.w, p.h))
-
-        screen.blit(player_sprite, (x - player_sprite.get_width() // 4, y))
-        render_text_at(screen, "Score: " + str(p.score), X // 2, y_offset, score_color)
-        y_offset += 30
-
-        if debug and p.melee_rect:
-            hx, hy, hw, hh = p.melee_rect
-            pygame.draw.rect(screen, color, (hx, hy, hw, hh), 2)
+    renderer.draw_players(screen, all_players, player_sprite, my_id, debug, font)
 
     pygame.display.flip()  # updating screen
     dt = clock.tick(FPS) / 1000  # delta time sync

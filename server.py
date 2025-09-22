@@ -1,10 +1,8 @@
 import socket
 import threading
 import time
-import random as rand
 from game.settings import *
 from game.player import Player
-
 
 # getting server socket
 server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
