@@ -4,6 +4,7 @@ import pygame
 import time
 import sys
 from game.settings import *
+from game.player import Player
 
 # Client pygame init
 pygame.init()
@@ -89,7 +90,7 @@ my_id = None
 buffer = ""
 
 # all players local cache for real-time rendering
-all_players = {}
+all_players: dict[int, Player] = {}
 prev_positions = {}
 
 # dev mode (showing collisions...)
@@ -121,7 +122,6 @@ def listen_loop():
                 my_id = int(line.split(":")[1])
                 print(f"[CLIENT] Player ID: {my_id}")
             else:
-                new_state = {}
                 for p in line.split(";"):
                     if not p:
                         continue
@@ -131,15 +131,22 @@ def listen_loop():
                         pid = int(parts[0])
                         x, y = float(parts[1]), float(parts[2])
                         score = int(parts[3])
-                        new_state[pid] = {"pos": (x, y), "score": score}
-                        if len(parts) == 8:  # has melee rect
+
+                        # create or update Player object based on server data
+                        if pid not in all_players:
+                            all_players[pid] = Player(pid)  # instantiate with server ID
+                        p = all_players[pid]
+
+                        # set server-authoritative values
+                        p.x, p.y = x, y
+                        p.score = score
+                        if len(parts) == 8:
                             mx, my, mw, mh = map(float, parts[4:])
-                            new_state[pid]["melee_rect"] = (mx, my, mw, mh)
-                        # pid, x, y = p.split(",")
-                        # new_state[int(pid)] = (float(x), float(y)) # recv new players positions (high frequency)
+                            p.melee_rect = (mx, my, mw, mh)
+                        else:
+                            p.melee_rect = None
                     except Exception as e:
                         print("Parse error:", p, e)
-                all_players = new_state  # updating cache
 
 
 # starting listening on another thread (performance optimizing)
@@ -202,32 +209,20 @@ while running:
 
     # trying to interpolate other players positions (for smoothing lags)
     y_offset = 10
-    for pid, data in all_players.items():
-        x, y = data["pos"]
+    for pid, p in all_players.items():
+        x, y = p.x, p.y
 
-        if pid in prev_positions:
-            px, py = prev_positions[pid]
-            x = px + (x - px) * 0.4
-            y = py + (y - py) * 0.4
-        prev_positions[pid] = (x, y)
-
-        color = "red" if pid == my_id else "blue"  # self in red, others in blue
-        score_color = (
-            "green" if pid == my_id else "white"
-        )  # self in red, others in blue
+        color = "red" if pid == my_id else "blue"
+        score_color = "green" if pid == my_id else "white"
         if debug:
-            pygame.draw.rect(screen, color, (x, y, 32, 64))
+            pygame.draw.rect(screen, color, (x, y, p.w, p.h))
 
-        # render sprite (fix width call)
-        screen.blit(player_sprite, (x - (player_sprite.get_width() // 4), y))
-        render_text_at(
-            screen, "Score: " + str(data["score"]), X // 2, y_offset, score_color
-        )
+        screen.blit(player_sprite, (x - player_sprite.get_width() // 4, y))
+        render_text_at(screen, "Score: " + str(p.score), X // 2, y_offset, score_color)
         y_offset += 30
 
-        # debug: melee rect
-        if debug and "melee_rect" in data:
-            hx, hy, hw, hh = data["melee_rect"]
+        if debug and p.melee_rect:
+            hx, hy, hw, hh = p.melee_rect
             pygame.draw.rect(screen, color, (hx, hy, hw, hh), 2)
 
     pygame.display.flip()  # updating screen

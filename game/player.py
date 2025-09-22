@@ -18,7 +18,7 @@ class Player:
         self.score = 0
         self.last_seen = time.time()
         self.last_melee: float = -1
-        self.melee_rect: tuple[float, float, float, float] = (0, 0, 0, 0)
+        self.melee_rect: tuple[float, float, float, float] | None = (0, 0, 0, 0)
 
     def alive(self):
         """Send an ALIVE Signal to server to prevent disconnect."""
@@ -49,8 +49,8 @@ class Player:
             self.x = SCREEN_WIDTH - self.w
 
         if time.time() - self.last_melee > 0.5:
-            del self.last_melee
-            del self.melee_rect
+            self.last_melee = -1
+            self.melee_rect = None
 
     def handle_input(self, cmd: str):
         """Apply a single command from the client."""

@@ -49,16 +49,25 @@ def receive_loop():
                 else:
                     player.handle_input(cmd)
                     # check collisions with other players
-            if player.melee_rect:  # only if player is attacking
-                mx, my, mw, mh = player.melee_rect
-                for other_addr, other in players.items():
-                    if other_addr == addr:
-                        continue
-                    ox, oy, ow, oh = other.x, other.y, other.w, other.h
-                    if mx < ox + ow and mx + mw > ox and my < oy + oh and my + mh > oy:
-                        print(f"[SERVER] Player {player.id} hit Player {other.id}!")
-                        other.last_melee = time.time()  # optional
-                        player.score += 1
+                    if (
+                        cmd == "MELEE" and player.melee_rect
+                    ):  # only if player is attacking
+                        mx, my, mw, mh = player.melee_rect
+                        for other_addr, other in players.items():
+                            if other_addr == addr:
+                                continue
+                            ox, oy, ow, oh = other.x, other.y, other.w, other.h
+                            if (
+                                mx < ox + ow
+                                and mx + mw > ox
+                                and my < oy + oh
+                                and my + mh > oy
+                            ):
+                                print(
+                                    f"[SERVER] Player {player.id} hit Player {other.id}!"
+                                )
+                                other.last_melee = time.time()  # optional
+                                player.score += 1
 
 
 # handling client physics (thread)
