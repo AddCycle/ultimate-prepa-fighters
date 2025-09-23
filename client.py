@@ -173,7 +173,7 @@ while running:
     )  # ground
 
     # trying to interpolate other players positions (for smoothing lags)
-    renderer.draw_players(screen, all_players, player_sprite, my_id, dt, debug, font)
+    renderer.draw_players(screen, all_players, my_id, dt, debug, font)
 
     pygame.display.flip()  # updating screen
     dt = clock.tick(FPS) / 1000  # delta time sync

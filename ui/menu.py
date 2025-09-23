@@ -6,7 +6,7 @@ def show_main_menu(screen: pygame.Surface, player_sprite):
     X, Y = screen.get_width(), screen.get_height()
     font = pygame.font.Font("PressStart2P.ttf", 20)
     quit_text = text("QUIT", "white", font)
-    connect_text = text("CONNECT", "white", font)
+    connect_text = text("PLAY", "white", font)
     selecting = True
     choice = -1
     # main MENU
@@ -20,11 +20,11 @@ def show_main_menu(screen: pygame.Surface, player_sprite):
         if keys[pygame.K_DOWN]:
             choice = 0
             quit_text = text("QUIT", "green", font)
-            connect_text = text("CONNECT", "white", font)
+            connect_text = text("PLAY", "white", font)
         elif keys[pygame.K_UP]:
             choice = 1
             quit_text = text("QUIT", "white", font)
-            connect_text = text("CONNECT", "green", font)
+            connect_text = text("PLAY", "green", font)
         elif keys[pygame.K_SPACE]:
             selecting = False
             break

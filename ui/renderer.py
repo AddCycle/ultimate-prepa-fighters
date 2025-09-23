@@ -17,7 +17,6 @@ def render_text_at(
 def draw_players(
     surface: pygame.Surface,
     players: dict[int, player.Player],
-    player_sprite,
     my_id,
     dt,
     debug=False,

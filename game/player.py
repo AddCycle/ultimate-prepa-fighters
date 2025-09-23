@@ -9,11 +9,17 @@ class Player:
         self.id = pid
         self.x: float = 100
         self.y: float = GROUND_Y
-        self.w = 64
-        self.h = 64
+        self.scale = 3
+        # temp for testing too much
+        self.w = 32 * self.scale
+        self.h = 32 * self.scale
         self.vx: float = 0
         self.vy: float = 0
+        # track of jumps
         self.on_ground = True
+        self.max_jumps = 2
+        self.jump_count = 0
+
         self.speed = random.randint(400, 600)
         self.facing = "right"  # remembers last facing direction
         self.score = 0
@@ -35,10 +41,12 @@ class Player:
         self.last_seen = time.time()
 
     def jump(self):
-        """Perform a jump if on ground."""
-        if self.on_ground:
+        """-- previously : Perform a jump if on ground.
+        -- now : Perform a jump if allowed (supports double jump)."""
+        if self.jump_count < self.max_jumps:
             self.vy = JUMP_SPEED
             self.on_ground = False
+            self.jump_count += 1
 
     def update(self, dt):
         # gravity & motion
@@ -51,6 +59,7 @@ class Player:
             self.y = GROUND_Y
             self.vy = 0
             self.on_ground = True
+            self.jump_count = 0  # resetting jumps
 
         # horizontal bounds
         if self.x < 0:
@@ -82,8 +91,8 @@ class Player:
 
     def perform_melee(self):
         """Compute melee attack; sets self.melee_rect."""
-        melee_width = 80
-        melee_height = 64
+        melee_width = self.w
+        melee_height = self.h
         facing_right = self.facing == "right"
         hit_x = self.x + self.w if facing_right else self.x - melee_width
         hit_y = self.y
@@ -111,6 +120,8 @@ class Player:
             7: "fall_left",
             8: "melee_right",
             9: "melee_left",
+            10: "doublejump_right",
+            11: "doublejump_left",
         }
 
         self.animations = {name: [] for name in row_mapping.values()}
@@ -127,7 +138,7 @@ class Player:
 
                 if rect.right <= sheet_width and rect.bottom <= sheet_height:
                     frame = sheet.subsurface(rect)
-                    frame = pygame.transform.scale_by(frame, 2)
+                    frame = pygame.transform.scale_by(frame, self.scale)
                     self.animations[anim_name].append(frame)
 
     def decide_animation(self):
@@ -137,7 +148,10 @@ class Player:
         if self.last_melee > 0 and time.time() - self.last_melee < 0.5:
             new_anim = f"melee_{facing}"
         elif self.vy < 0:
-            new_anim = f"jump_{facing}"
+            if self.jump_count == 2:
+                new_anim = f"doublejump_{facing}"
+            else:
+                new_anim = f"jump_{facing}"
         elif self.vy > 0:
             new_anim = f"fall_{facing}"
         elif abs(self.vx) > 0:
