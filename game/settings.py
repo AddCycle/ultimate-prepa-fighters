@@ -3,12 +3,12 @@ IP = "localhost"
 PORT = 5000
 
 # window settings
-SCREEN_WIDTH = 800  # temp
-SCREEN_HEIGHT = 600  # temp
+SCREEN_WIDTH = 1280  # temp
+SCREEN_HEIGHT = 720  # temp
 
 # game physics
 GRAVITY = 1500
-PLATFORM_HEIGHT = 64
+PLATFORM_HEIGHT = 128
 GROUND_Y = SCREEN_HEIGHT - PLATFORM_HEIGHT
 JUMP_SPEED = -700
 

@@ -103,8 +103,8 @@ def listen_loop():
                         p.x, p.y = x, y
                         p.score = score
                         p.current_anim = anim
-                        if len(parts) == 8:
-                            mx, my, mw, mh = map(float, parts[4:])
+                        if len(parts) == 9:
+                            mx, my, mw, mh = map(float, parts[5:])
                             p.melee_rect = (mx, my, mw, mh)
                         else:
                             p.melee_rect = None
@@ -169,7 +169,7 @@ while running:
     screen.fill("black")  # bg
     screen.blit(game_text, gameTextRect)  # text
     pygame.draw.rect(
-        screen, "purple", (0, GROUND_Y + 32, screen.get_width(), 10)
+        screen, "purple", (0, GROUND_Y + 64, screen.get_width(), 10)
     )  # ground
 
     # trying to interpolate other players positions (for smoothing lags)

@@ -9,8 +9,8 @@ class Player:
         self.id = pid
         self.x: float = 100
         self.y: float = GROUND_Y
-        self.w = 32
-        self.h = 32
+        self.w = 64
+        self.h = 64
         self.vx: float = 0
         self.vy: float = 0
         self.on_ground = True
@@ -107,8 +107,10 @@ class Player:
             3: "run_left",
             4: "jump_right",
             5: "jump_left",
-            6: "melee_right",
-            7: "melee_left",
+            6: "fall_right",
+            7: "fall_left",
+            8: "melee_right",
+            9: "melee_left",
         }
 
         self.animations = {name: [] for name in row_mapping.values()}
@@ -125,6 +127,7 @@ class Player:
 
                 if rect.right <= sheet_width and rect.bottom <= sheet_height:
                     frame = sheet.subsurface(rect)
+                    frame = pygame.transform.scale_by(frame, 2)
                     self.animations[anim_name].append(frame)
 
     def decide_animation(self):
@@ -133,8 +136,10 @@ class Player:
 
         if self.last_melee > 0 and time.time() - self.last_melee < 0.5:
             new_anim = f"melee_{facing}"
-        elif not self.on_ground:
+        elif self.vy < 0:
             new_anim = f"jump_{facing}"
+        elif self.vy > 0:
+            new_anim = f"fall_{facing}"
         elif abs(self.vx) > 0:
             new_anim = f"run_{facing}"
         else:
