@@ -34,6 +34,9 @@ def center_text_rect(surface: pygame.Rect, y: int) -> pygame.Rect:
 player_sprite = pygame.image.load("icon.png").convert_alpha()
 player_sprite = pygame.transform.scale(player_sprite, (64, 64))
 
+# bg loading
+bg_img = pygame.image.load("bg.png").convert_alpha()
+
 # main menu selection
 choice = menu.show_main_menu(screen, player_sprite)
 if choice == 0:
@@ -136,20 +139,22 @@ while running:
 
     # keydown event handling
     keys = pygame.key.get_pressed()
+    # one-time pressed keys event
+    just_pressed_keys = pygame.key.get_just_pressed()
+
+    # input handling
     send_msg = "STOP"
     if keys[pygame.K_a] or keys[pygame.K_LEFT]:
         send_msg = "LEFT"
     elif keys[pygame.K_d] or keys[pygame.K_RIGHT]:
         send_msg = "RIGHT"
-    if keys[pygame.K_SPACE] or keys[pygame.K_UP]:
+    if just_pressed_keys[pygame.K_SPACE] or just_pressed_keys[pygame.K_UP]:
         send_msg += "|JUMP"
     elif keys[pygame.K_s] or keys[pygame.K_DOWN]:
         send_msg += "|DOWN"
     if keys[pygame.K_ESCAPE]:
         running = False
 
-    # one-time pressed keys event
-    just_pressed_keys = pygame.key.get_just_pressed()
     if just_pressed_keys[pygame.K_1]:
         debug = not debug
     if keys[pygame.K_c]:
@@ -171,6 +176,9 @@ while running:
     pygame.draw.rect(
         screen, "purple", (0, GROUND_Y + 64, screen.get_width(), 10)
     )  # ground
+
+    # draw bg
+    renderer.draw_background(screen, bg_img)
 
     # trying to interpolate other players positions (for smoothing lags)
     renderer.draw_players(screen, all_players, my_id, dt, debug, font)

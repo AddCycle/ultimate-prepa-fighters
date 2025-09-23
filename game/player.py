@@ -17,7 +17,7 @@ class Player:
         self.vy: float = 0
         # track of jumps
         self.on_ground = True
-        self.max_jumps = 2
+        self.max_jumps = 5
         self.jump_count = 0
 
         self.speed = random.randint(400, 600)

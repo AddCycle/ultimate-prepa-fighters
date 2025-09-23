@@ -48,3 +48,8 @@ def draw_players(
         if debug and p.melee_rect:
             mx, my, mw, mh = p.melee_rect
             pygame.draw.rect(surface, color, (mx, my, mw, mh), 2)
+
+
+def draw_background(surface: pygame.Surface, bg_img: pygame.Surface):
+    X = surface.get_width()
+    surface.blit(bg_img)
