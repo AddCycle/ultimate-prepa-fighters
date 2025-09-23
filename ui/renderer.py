@@ -1,4 +1,5 @@
 import pygame
+from game import player
 
 
 def text(text: str, color: str, font: pygame.font.Font) -> pygame.Surface:
@@ -13,17 +14,32 @@ def render_text_at(
     surface.blit(sf, rect)
 
 
-def draw_players(surface, players, player_sprite, my_id, debug=False, font=None):
+def draw_players(
+    surface: pygame.Surface,
+    players: dict[int, player.Player],
+    player_sprite,
+    my_id,
+    dt,
+    debug=False,
+    font=None,
+):
     X = surface.get_width()
     y_offset = 10
     for pid, p in players.items():
+        p.step_animation(dt)
         x, y = p.x, p.y
+
+        frame = p.get_current_frame()
         color = "red" if pid == my_id else "blue"
         score_color = "green" if pid == my_id else "white"
-
         if debug:
             pygame.draw.rect(surface, color, (x, y, p.w, p.h))
-        surface.blit(player_sprite, (x - player_sprite.get_width() // 4, y))
+
+        # Flip frame if facing left
+        if p.facing == "left":
+            frame = pygame.transform.flip(frame, True, False)
+
+        surface.blit(frame, (x, y))
         if font:
             render_text_at(
                 surface, f"Score: {p.score}", X // 2, y_offset, score_color, font

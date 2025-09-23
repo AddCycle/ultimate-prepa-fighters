@@ -7,6 +7,7 @@ from game.player import Player
 # getting server socket
 server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 server.bind(("0.0.0.0", PORT))  # accepting all ips on PORT using UDP protocol
+print(f"[SERVER] IP : {IP}")
 print(f"[SERVER] Listening on UDP port {PORT}")
 
 players: dict[str, Player] = {}  # dict of "addr":Player
@@ -77,6 +78,7 @@ def physics_loop():
         with lock:
             for p in players.values():
                 p.update(dt)
+                p.current_anim = p.decide_animation()
             # handling client timeout (TODO : move this part)
             now = time.time()
             disconnected = [
@@ -93,7 +95,7 @@ def physics_loop():
 
                 state_parts = []
                 for p in players.values():
-                    part = f"{p.id},{p.x},{p.y},{p.score}"
+                    part = f"{p.id},{p.x},{p.y},{p.score},{p.current_anim}"
                     if p.melee_rect:
                         mx, my, mw, mh = p.melee_rect
                         part += f",{mx},{my},{mw},{mh}"

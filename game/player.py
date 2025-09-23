@@ -1,27 +1,37 @@
 import time
 import random
+import pygame
 from game.settings import *
 
 
 class Player:
-    def __init__(self, pid) -> None:
+    def __init__(self, pid, client_side=False) -> None:
         self.id = pid
         self.x: float = 100
         self.y: float = GROUND_Y
         self.w = 32
-        self.h = 64
+        self.h = 32
         self.vx: float = 0
         self.vy: float = 0
         self.on_ground = True
         self.speed = random.randint(400, 600)
-        self.facing = "right"
+        self.facing = "right"  # remembers last facing direction
         self.score = 0
         self.last_seen = time.time()
-        self.last_melee: float = -1
-        self.melee_rect: tuple[float, float, float, float] | None = (0, 0, 0, 0)
+        self.last_melee: float = 0.0
+        self.melee_rect: tuple[float, float, float, float] | None = None
+
+        # animation state
+        self.animations: dict[str, list[pygame.Surface]] = {}
+        self.current_anim = "idle_right"
+        self.anim_frame = 0
+        self.anim_timer = 0.0
+
+        if client_side:
+            self.load_sprites("sprite_sheet.png")
 
     def alive(self):
-        """Send an ALIVE Signal to server to prevent disconnect."""
+        """Send an ALIVE signal to server to prevent disconnect."""
         self.last_seen = time.time()
 
     def jump(self):
@@ -31,7 +41,7 @@ class Player:
             self.on_ground = False
 
     def update(self, dt):
-        # gravity & ground (solid)
+        # gravity & motion
         self.vy += GRAVITY * dt
         self.x += self.vx * dt
         self.y += self.vy * dt
@@ -42,14 +52,15 @@ class Player:
             self.vy = 0
             self.on_ground = True
 
-        # horizontal bounds of the screen (clamself)
+        # horizontal bounds
         if self.x < 0:
             self.x = 0
         elif self.x > SCREEN_WIDTH - self.w:
             self.x = SCREEN_WIDTH - self.w
 
-        if time.time() - self.last_melee > 0.5:
-            self.last_melee = -1
+        # melee duration timeout
+        if self.last_melee > 0 and time.time() - self.last_melee > 0.5:
+            self.last_melee = 0.0
             self.melee_rect = None
 
     def handle_input(self, cmd: str):
@@ -78,3 +89,80 @@ class Player:
         hit_y = self.y
         self.melee_rect = (hit_x, hit_y, melee_width, melee_height)
         self.last_melee = time.time()
+
+    def load_sprites(self, sheet_path="sprite_sheet.png"):
+        sheet = pygame.image.load(sheet_path).convert_alpha()
+        frame_width, frame_height = 32, 32
+        sheet_width, sheet_height = sheet.get_size()
+        print(f"sheet size : {sheet.get_size()}")
+
+        cols = sheet_width // frame_width  # 12
+        rows = sheet_height // frame_height  # 8
+
+        # Map each row to an animation name
+        row_mapping = {
+            0: "idle_right",
+            1: "idle_left",
+            2: "run_right",
+            3: "run_left",
+            4: "jump_right",
+            5: "jump_left",
+            6: "melee_right",
+            7: "melee_left",
+        }
+
+        self.animations = {name: [] for name in row_mapping.values()}
+
+        for row in range(rows):
+            anim_name = row_mapping.get(row)
+            if anim_name is None:
+                continue
+
+            for col in range(cols):
+                x = col * frame_width
+                y = row * frame_height
+                rect = pygame.Rect(x, y, frame_width, frame_height)
+
+                if rect.right <= sheet_width and rect.bottom <= sheet_height:
+                    frame = sheet.subsurface(rect)
+                    self.animations[anim_name].append(frame)
+
+    def decide_animation(self):
+        """Server-side: decides which animation should be active."""
+        facing = self.facing  # use last known direction
+
+        if self.last_melee > 0 and time.time() - self.last_melee < 0.5:
+            new_anim = f"melee_{facing}"
+        elif not self.on_ground:
+            new_anim = f"jump_{facing}"
+        elif abs(self.vx) > 0:
+            new_anim = f"run_{facing}"
+        else:
+            new_anim = f"idle_{facing}"
+
+        # reset frame if animation changed
+        if new_anim != self.current_anim:
+            self.current_anim = new_anim
+            self.anim_frame = 0
+            self.anim_timer = 0.0
+
+        return self.current_anim
+
+    def get_current_frame(self):
+        frames = self.animations.get(self.current_anim, [])
+        if not frames:
+            # nothing loaded: return a transparent dummy surface instead of crashing
+            return pygame.Surface((self.w, self.h), pygame.SRCALPHA)
+
+        return frames[self.anim_frame % len(frames)]
+
+    def step_animation(self, dt):
+        """Client-side: advances frames for the current_anim decided by server."""
+        frames = self.animations.get(self.current_anim, [])
+        if not frames:
+            return
+
+        self.anim_timer += dt
+        if self.anim_timer > 0.1:
+            self.anim_timer = 0
+            self.anim_frame = (self.anim_frame + 1) % len(frames)

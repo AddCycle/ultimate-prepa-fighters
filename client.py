@@ -16,7 +16,7 @@ pygame.font.init()
 # window setup
 icon_surface = pygame.image.load("icon.png")
 pygame.display.set_icon(icon_surface)
-screen = pygame.display.set_mode((800, 600))
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Ultimate Prepa Fighters | UPF")
 X = screen.get_width()
 Y = screen.get_height()
@@ -90,15 +90,19 @@ def listen_loop():
                         pid = int(parts[0])
                         x, y = float(parts[1]), float(parts[2])
                         score = int(parts[3])
+                        anim = parts[4]
 
                         # create or update Player object based on server data
                         if pid not in all_players:
-                            all_players[pid] = Player(pid)  # instantiate with server ID
+                            all_players[pid] = Player(
+                                pid, client_side=True
+                            )  # instantiate with server ID
                         p = all_players[pid]
 
                         # set server-authoritative values
                         p.x, p.y = x, y
                         p.score = score
+                        p.current_anim = anim
                         if len(parts) == 8:
                             mx, my, mw, mh = map(float, parts[4:])
                             p.melee_rect = (mx, my, mw, mh)
@@ -164,10 +168,12 @@ while running:
     # screen rendering
     screen.fill("black")  # bg
     screen.blit(game_text, gameTextRect)  # text
-    pygame.draw.rect(screen, "purple", (0, 563, screen.get_width(), 500))  # ground
+    pygame.draw.rect(
+        screen, "purple", (0, GROUND_Y + 32, screen.get_width(), 10)
+    )  # ground
 
     # trying to interpolate other players positions (for smoothing lags)
-    renderer.draw_players(screen, all_players, player_sprite, my_id, debug, font)
+    renderer.draw_players(screen, all_players, player_sprite, my_id, dt, debug, font)
 
     pygame.display.flip()  # updating screen
     dt = clock.tick(FPS) / 1000  # delta time sync
