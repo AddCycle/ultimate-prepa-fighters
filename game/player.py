@@ -34,7 +34,7 @@ class Player:
         self.anim_timer = 0.0
 
         if client_side:
-            self.load_sprites("sprite_sheet.png")
+            self.load_sprites("qval.png")
 
     def alive(self):
         """Send an ALIVE signal to server to prevent disconnect."""

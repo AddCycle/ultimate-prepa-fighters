@@ -1,5 +1,5 @@
-IP = "141.253.99.233"
-# IP = "localhost"
+# IP = "141.253.99.233"
+IP = "localhost"
 PORT = 5000
 
 # window settings
