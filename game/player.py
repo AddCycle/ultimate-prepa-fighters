@@ -72,7 +72,7 @@ class Player:
             self.x = SCREEN_WIDTH - self.w
 
         # melee duration timeout
-        if self.last_melee > 0 and time.time() - self.last_melee > 0.5:
+        if self.last_melee > 0 and time.time() - self.last_melee > MELEE_DURATION:
             self.last_melee = 0.0
             self.melee_rect = None
 
@@ -149,10 +149,10 @@ class Player:
         """Server-side: decides which animation should be active."""
         facing = self.facing  # use last known direction
 
-        if self.last_melee > 0 and time.time() - self.last_melee < 0.5:
+        if self.last_melee > 0 and time.time() - self.last_melee < MELEE_DURATION:
             new_anim = f"melee_{facing}"
         elif self.vy < 0:
-            if self.jump_count == 2:
+            if self.jump_count != 0 and self.jump_count % 2 == 0:
                 new_anim = f"doublejump_{facing}"
             else:
                 new_anim = f"jump_{facing}"
