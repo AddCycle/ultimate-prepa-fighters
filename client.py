@@ -24,6 +24,12 @@ Y = screen.get_height()
 # text engine setup
 font = pygame.font.Font("PressStart2P.ttf", 20)
 
+# sprite loading
+attack_surface_right = pygame.image.load("attack_sprite.png").convert_alpha()
+attack_surface_left = pygame.transform.flip(
+    attack_surface_right, True, False
+).convert_alpha()
+
 
 def center_text_rect(surface: pygame.Rect, y: int) -> pygame.Rect:
     surface.center = (X // 2, y)
@@ -128,6 +134,10 @@ def listen_loop():
                         p.x, p.y = x, y
                         p.score = score
                         p.current_anim = anim
+                        if "_left" in anim:
+                            p.facing = "left"
+                        elif "_right" in anim:
+                            p.facing = "right"
 
                         if len(parts) >= 6:
                             server_char_choice = int(parts[5])
@@ -218,7 +228,16 @@ while running:
     renderer.draw_background(screen, bg_img)
 
     # trying to interpolate other players positions (for smoothing lags)
-    renderer.draw_players(screen, all_players, my_id, dt, debug, font)
+    renderer.draw_players(
+        screen,
+        all_players,
+        my_id,
+        dt,
+        attack_surface_right,
+        attack_surface_left,
+        debug,
+        font,
+    )
 
     pygame.display.flip()  # updating screen
     dt = clock.tick(FPS) / 1000  # delta time sync

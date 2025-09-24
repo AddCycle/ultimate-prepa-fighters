@@ -1,5 +1,7 @@
 import pygame
+import time
 from game import player
+from game import settings
 
 
 def text(text: str, color: str, font: pygame.font.Font) -> pygame.Surface:
@@ -19,6 +21,8 @@ def draw_players(
     players: dict[int, player.Player],
     my_id,
     dt,
+    attack_right,
+    attack_left,
     debug=False,
     font=None,
 ):
@@ -35,8 +39,7 @@ def draw_players(
             pygame.draw.rect(surface, color, (x, y, p.w, p.h))
 
         # Flip frame if facing left
-        if p.facing == "left":
-            frame = pygame.transform.flip(frame, True, False)
+        print(f"player facing : {p.facing}")
 
         surface.blit(frame, (x, y))
         if font:
@@ -48,6 +51,11 @@ def draw_players(
         if debug and p.melee_rect:
             mx, my, mw, mh = p.melee_rect
             pygame.draw.rect(surface, color, (mx, my, mw, mh), 2)
+
+        if p.melee_rect:
+            mx, my, mw, mh = p.melee_rect
+            attack_surface = attack_left if p.facing == "left" else attack_right
+            surface.blit(attack_surface, (mx, my))
 
 
 def draw_background(surface: pygame.Surface, bg_img: pygame.Surface):
