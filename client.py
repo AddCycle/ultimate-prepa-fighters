@@ -64,6 +64,9 @@ debug = False
 # inital message to query a player id from server
 client.sendto("HELLO".encode(), server_addr)
 
+# after getting char_choice in client
+client.sendto(f"CHAR:{char_choice}".encode(), server_addr)
+
 
 # listen thread (listen all server data)
 def listen_loop():
@@ -86,10 +89,26 @@ def listen_loop():
             if my_id is None and line.startswith("ID:"):
                 my_id = int(line.split(":")[1])
                 print(f"[CLIENT] Player ID: {my_id}")
+
+                if my_id is not None and my_id not in all_players:
+                    all_players[my_id] = Player(my_id, client_side=True)
+
+                all_players[my_id].char_choice = char_choice
+                sprite_map = {0: "frog.png", 1: "qval.png", 2: "pass.png"}
+                all_players[my_id].load_sprites(sprite_map[char_choice])
+                continue
             else:
                 for p in line.split(";"):
                     if not p:
                         continue
+                    if p.startswith("QUIT:"):
+                        removed_ids = p.split(":")[1].split(",")
+                        for rid in removed_ids:
+                            if rid:
+                                rid_int = int(rid)
+                                if rid_int in all_players:
+                                    del all_players[rid_int]
+                        continue  # skip normal player updates for QUIT line
                     try:
                         # received players data parsing
                         parts = p.split(",")
@@ -109,8 +128,23 @@ def listen_loop():
                         p.x, p.y = x, y
                         p.score = score
                         p.current_anim = anim
-                        if len(parts) == 9:
-                            mx, my, mw, mh = map(float, parts[5:])
+
+                        if len(parts) >= 6:
+                            server_char_choice = int(parts[5])
+                            if p.char_choice != server_char_choice:
+                                p.char_choice = server_char_choice
+                                if p.id == my_id:
+                                    pass
+                                else:
+                                    sprite_map = {
+                                        0: "frog.png",
+                                        1: "qval.png",
+                                        2: "pass.png",
+                                    }
+                                    p.load_sprites(sprite_map[server_char_choice])
+
+                        if len(parts) == 10:
+                            mx, my, mw, mh = map(float, parts[6:])
                             p.melee_rect = (mx, my, mw, mh)
                         else:
                             p.melee_rect = None
@@ -192,5 +226,6 @@ while running:
 client.sendto(
     "QUIT".encode(), server_addr
 )  # sending to server a quit signal for client disconnect
+print("QUIT SIGNAL SENT")
 pygame.quit()  # quitting pygame subsystems
 client.close()  # closing socket connection

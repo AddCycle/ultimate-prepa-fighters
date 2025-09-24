@@ -7,6 +7,7 @@ from game.settings import *
 class Player:
     def __init__(self, pid, client_side=False) -> None:
         self.id = pid
+        self.char_choice: int | None = None
         self.x: float = 100
         self.y: float = GROUND_Y
         self.scale = 3
@@ -33,12 +34,15 @@ class Player:
         self.anim_frame = 0
         self.anim_timer = 0.0
 
-        if client_side:
-            self.load_sprites("qval.png")
+        # if client_side:
+        #     self.load_sprites("qval.png")
+        # quit signal
+        self.quit = False
 
     def alive(self):
         """Send an ALIVE signal to server to prevent disconnect."""
         self.last_seen = time.time()
+        print(f"Player {self.id} alive")
 
     def jump(self):
         """-- previously : Perform a jump if on ground.
@@ -99,7 +103,7 @@ class Player:
         self.melee_rect = (hit_x, hit_y, melee_width, melee_height)
         self.last_melee = time.time()
 
-    def load_sprites(self, sheet_path="sprite_sheet.png"):
+    def load_sprites(self, sheet_path="frog.png"):
         sheet = pygame.image.load(sheet_path).convert_alpha()
         frame_width, frame_height = 32, 32
         sheet_width, sheet_height = sheet.get_size()

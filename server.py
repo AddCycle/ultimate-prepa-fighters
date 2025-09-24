@@ -37,36 +37,46 @@ def receive_loop():
                 print(f"[SERVER] player : {players[addr]}")
 
             player = players[addr]
-            for cmd in data.split("|"):
-                if cmd == "ALIVE":
-                    player.alive()
-                elif cmd == "QUIT":
-                    pid = player.id
-                    print(f"[SERVER] Player {pid} quit")
-                    del players[addr]
-                    continue
-                else:
-                    player.handle_input(cmd)
-                    # check collisions with other players
-                    if (
-                        cmd == "MELEE" and player.melee_rect
-                    ):  # only if player is attacking
-                        mx, my, mw, mh = player.melee_rect
-                        for other_addr, other in players.items():
-                            if other_addr == addr:
-                                continue
-                            ox, oy, ow, oh = other.x, other.y, other.w, other.h
-                            if (
-                                mx < ox + ow
-                                and mx + mw > ox
-                                and my < oy + oh
-                                and my + mh > oy
-                            ):
-                                print(
-                                    f"[SERVER] Player {player.id} hit Player {other.id}!"
-                                )
-                                other.last_melee = time.time()  # optional
-                                player.score += 1
+
+            if data.startswith("CHAR:"):
+                try:
+                    choice = int(data.split(":")[1])
+                    player.char_choice = choice
+                    print(f"[SERVER] Player {player.id} chose character {choice}")
+                except Exception as e:
+                    print("Invalid CHAR message:", data, e)
+            else:
+                for cmd in data.split("|"):
+                    if cmd == "ALIVE":
+                        player.alive()
+                    elif cmd == "QUIT":
+                        pid = player.id
+                        print(f"[SERVER] Player {pid} quit")
+                        # del players[addr]
+                        player.quit = True
+                        continue
+                    else:
+                        player.handle_input(cmd)
+                        # check collisions with other players
+                        if (
+                            cmd == "MELEE" and player.melee_rect
+                        ):  # only if player is attacking
+                            mx, my, mw, mh = player.melee_rect
+                            for other_addr, other in players.items():
+                                if other_addr == addr:
+                                    continue
+                                ox, oy, ow, oh = other.x, other.y, other.w, other.h
+                                if (
+                                    mx < ox + ow
+                                    and mx + mw > ox
+                                    and my < oy + oh
+                                    and my + mh > oy
+                                ):
+                                    print(
+                                        f"[SERVER] Player {player.id} hit Player {other.id}!"
+                                    )
+                                    other.last_melee = time.time()  # optional
+                                    player.score += 1
 
 
 # handling client physics (thread)
@@ -82,11 +92,17 @@ def physics_loop():
             # handling client timeout (TODO : move this part)
             now = time.time()
             disconnected = [
-                addr for addr, p in players.items() if now - p.last_seen > TIMEOUT
+                addr
+                for addr, p in players.items()
+                if now - p.last_seen > TIMEOUT or getattr(p, "quit", False)
             ]
             for addr in disconnected:
                 pid = players[addr].id
                 print(f"[SERVER] Removing inactive player {pid}")
+                quit_msg = f"QUIT:{pid}\n"
+                for other_addr in players.keys():
+                    if other_addr != addr:
+                        server.sendto(quit_msg.encode(), other_addr)
                 del players[addr]
 
             # broadcasting data to each player the everyone state
@@ -95,7 +111,9 @@ def physics_loop():
 
                 state_parts = []
                 for p in players.values():
-                    part = f"{p.id},{p.x},{p.y},{p.score},{p.current_anim}"
+                    part = (
+                        f"{p.id},{p.x},{p.y},{p.score},{p.current_anim},{p.char_choice}"
+                    )
                     if p.melee_rect:
                         mx, my, mw, mh = p.melee_rect
                         part += f",{mx},{my},{mw},{mh}"
