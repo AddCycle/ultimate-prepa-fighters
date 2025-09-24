@@ -43,6 +43,9 @@ if choice == 0:
     pygame.quit()
     sys.exit()
 
+char_choice = menu.show_character_menu(screen, player_sprite)
+print(f"chosen char : {char_choice}")
+
 # getting the client/server socket/address for connecting, sending & receiving data
 client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 server_addr = (IP, PORT)
