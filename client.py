@@ -220,12 +220,15 @@ while running:
     # screen rendering
     screen.fill("black")  # bg
     screen.blit(game_text, gameTextRect)  # text
-    pygame.draw.rect(
-        screen, "purple", (0, GROUND_Y + 64, screen.get_width(), 10)
-    )  # ground
 
     # draw bg
     renderer.draw_background(screen, bg_img)
+
+    # floor
+    if debug:
+        pygame.draw.rect(
+            screen, "purple", (0, GROUND_Y + 32 * 3, screen.get_width(), 10)
+        )  # ground
 
     # trying to interpolate other players positions (for smoothing lags)
     renderer.draw_players(

@@ -89,7 +89,7 @@ def show_character_menu(screen: pygame.Surface, player_sprite):
             pygame.quit()
             sys.exit()
 
-        render_text_at(screen, "   Select your character", X // 2, 50, "white", font)
+        render_text_at(screen, "   Select your character   ", X // 2, 50, "white", font)
         screen.blit(frog_text, frog_text.get_rect(center=(X // 2, Y // 2)))
         screen.blit(qval_text, qval_text.get_rect(center=(X // 2, Y // 2 + 100)))
         screen.blit(pass_text, pass_text.get_rect(center=(X // 2, Y // 2 + 200)))
