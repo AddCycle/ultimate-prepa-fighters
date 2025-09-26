@@ -126,7 +126,13 @@ def listen_loop():
                         # set server-authoritative values
                         p.x, p.y = x, y
                         p.score = score
-                        p.current_anim = anim
+
+                        # setting the new animation to the beginning
+                        if p.current_anim != anim:
+                            p.current_anim = anim
+                            p.anim_frame = 0
+                            p.anim_timer = 0.0
+
                         if "_left" in anim:
                             p.facing = "left"
                         elif "_right" in anim:
@@ -187,7 +193,7 @@ while running:
         send_msg += "|JUMP"
     elif keys[pygame.K_s] or keys[pygame.K_DOWN]:
         send_msg += "|DOWN"
-    if keys[pygame.K_c]:
+    if just_pressed_keys[pygame.K_c]:
         send_msg += "|MELEE"
 
     if keys[pygame.K_ESCAPE]:
