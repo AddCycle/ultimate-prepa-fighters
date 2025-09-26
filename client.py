@@ -7,11 +7,12 @@ from game.settings import *
 from game.player import Player
 from ui import renderer
 from ui import menu
+import utils.logger
 
 # Client pygame init
 pygame.init()
-pygame.display.init()
-pygame.font.init()
+pygame.display.init()  # video
+pygame.font.init()  # font
 
 # window setup
 icon_surface = pygame.image.load("icon.png")
@@ -30,13 +31,7 @@ attack_surface_left = pygame.transform.flip(
     attack_surface_right, True, False
 ).convert_alpha()
 
-
-def center_text_rect(surface: pygame.Rect, y: int) -> pygame.Rect:
-    surface.center = (X // 2, y)
-    return surface
-
-
-# sprite loading
+# icon loading
 player_sprite = pygame.image.load("icon.png").convert_alpha()
 player_sprite = pygame.transform.scale(player_sprite, (64, 64))
 
@@ -49,14 +44,14 @@ if choice == 0:
     pygame.quit()
     sys.exit()
 
+# character menu selection
 char_choice = menu.show_character_menu(screen, player_sprite)
-print(f"chosen char : {char_choice}")
 
-# getting the client/server socket/address for connecting, sending & receiving data
+# network udp client socket
 client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 server_addr = (IP, PORT)
 
-# player id & commands buffer
+# client player id & commands buffer
 my_id = None
 buffer = ""
 
@@ -81,13 +76,13 @@ def listen_loop():
         try:
             data, _ = client.recvfrom(4096)
         except Exception as e:
-            print("Recv error:", e)
+            print("listen_loop, Recv error:", e)
             continue
 
         try:
             buffer += data.decode()
         except Exception as e:
-            print("Decode error:", e)
+            print("[CLIENT]: listen_loop: Decode error:", e)
             continue
 
         while "\n" in buffer:
@@ -97,7 +92,7 @@ def listen_loop():
                 print(f"[CLIENT] Player ID: {my_id}")
 
                 if my_id is not None and my_id not in all_players:
-                    all_players[my_id] = Player(my_id, client_side=True)
+                    all_players[my_id] = Player(my_id)
 
                 all_players[my_id].char_choice = char_choice
                 sprite_map = {0: "frog.png", 1: "qval.png", 2: "pass.png"}
@@ -125,9 +120,7 @@ def listen_loop():
 
                         # create or update Player object based on server data
                         if pid not in all_players:
-                            all_players[pid] = Player(
-                                pid, client_side=True
-                            )  # instantiate with server ID
+                            all_players[pid] = Player(pid)  # instantiate with server ID
                         p = all_players[pid]
 
                         # set server-authoritative values
@@ -172,13 +165,8 @@ last_send = ""
 dt = 0  # delta_time
 last_alive = time.time()  # for timeout/lost connnection
 
-game_text = font.render("Welcome to UPF", False, "white", "black")
-gameTextRect = game_text.get_rect()
-gameTextRect.center = (X // 2, Y // 2)
-
 # game loop
 while running:
-
     # when quitting window
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -199,13 +187,14 @@ while running:
         send_msg += "|JUMP"
     elif keys[pygame.K_s] or keys[pygame.K_DOWN]:
         send_msg += "|DOWN"
+    if keys[pygame.K_c]:
+        send_msg += "|MELEE"
+
     if keys[pygame.K_ESCAPE]:
         running = False
 
     if just_pressed_keys[pygame.K_1]:
         debug = not debug
-    if keys[pygame.K_c]:
-        send_msg += "|MELEE"
 
     # sending local data to server
     if send_msg != last_send:
@@ -216,10 +205,6 @@ while running:
     if time.time() - last_alive > 5:
         client.sendto("ALIVE".encode(), server_addr)
         last_alive = time.time()
-
-    # screen rendering
-    screen.fill("black")  # bg
-    screen.blit(game_text, gameTextRect)  # text
 
     # draw bg
     renderer.draw_background(screen, bg_img)
@@ -248,6 +233,7 @@ while running:
 client.sendto(
     "QUIT".encode(), server_addr
 )  # sending to server a quit signal for client disconnect
-print("QUIT SIGNAL SENT")
+
 pygame.quit()  # quitting pygame subsystems
 client.close()  # closing socket connection
+sys.exit()  # exiting the program

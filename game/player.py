@@ -5,13 +5,13 @@ from game.settings import *
 
 
 class Player:
-    def __init__(self, pid, client_side=False) -> None:
+    def __init__(self, pid) -> None:
         self.id = pid
         self.char_choice: int | None = None
         self.x: float = 100
         self.y: float = GROUND_Y
         self.scale = 3
-        # temp for testing too much
+        # temp for testing (maybe too much idk)
         self.w = 32 * self.scale
         self.h = 32 * self.scale
         self.vx: float = 0
@@ -21,11 +21,16 @@ class Player:
         self.max_jumps = 5
         self.jump_count = 0
 
-        self.speed = random.randint(400, 600)
+        # stats
+        self.health = 30  # FIXME each class a value
+        self.speed = random.randint(400, 600)  # FIXME each class a value
         self.facing = "right"  # remembers last facing direction
         self.score = 0
+
+        # combat
         self.last_seen = time.time()
         self.last_melee: float = 0.0
+        self.last_hit: float = 0.0
         self.melee_rect: tuple[float, float, float, float] | None = None
 
         # animation state
@@ -34,15 +39,13 @@ class Player:
         self.anim_frame = 0
         self.anim_timer = 0.0
 
-        # if client_side:
-        #     self.load_sprites("qval.png")
         # quit signal
         self.quit = False
 
     def alive(self):
         """Send an ALIVE signal to server to prevent disconnect."""
         self.last_seen = time.time()
-        print(f"Player {self.id} alive")
+        print(f"Player {self.id} alive signal")
 
     def jump(self):
         """-- previously : Perform a jump if on ground.
@@ -75,6 +78,10 @@ class Player:
         if self.last_melee > 0 and time.time() - self.last_melee > MELEE_DURATION:
             self.last_melee = 0.0
             self.melee_rect = None
+
+        # hit duration timeout
+        if self.last_hit > 0 and time.time() - self.last_hit > HIT_STUN_DURATION:
+            self.last_hit = 0.0
 
     def handle_input(self, cmd: str):
         """Apply a single command from the client."""
@@ -110,7 +117,7 @@ class Player:
         print(f"sheet size : {sheet.get_size()}")
 
         cols = sheet_width // frame_width  # 12
-        rows = sheet_height // frame_height  # 8
+        rows = sheet_height // frame_height  # 14
 
         # Map each row to an animation name
         row_mapping = {
@@ -126,6 +133,8 @@ class Player:
             9: "melee_left",
             10: "doublejump_right",
             11: "doublejump_left",
+            12: "hit_right",
+            13: "hit_left",
         }
 
         self.animations = {name: [] for name in row_mapping.values()}
@@ -160,6 +169,8 @@ class Player:
             new_anim = f"fall_{facing}"
         elif abs(self.vx) > 0:
             new_anim = f"run_{facing}"
+        elif self.last_hit > 0 and time.time() - self.last_hit < HIT_STUN_DURATION:
+            new_anim = f"hit_{facing}"
         else:
             new_anim = f"idle_{facing}"
 

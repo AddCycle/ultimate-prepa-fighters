@@ -21,3 +21,4 @@ TIMEOUT = 10  # 10sec timeout after no client ALIVE signal
 # client
 FPS = TICK_RATE  # client fps
 MELEE_DURATION = 1.2
+HIT_STUN_DURATION = 0.6
