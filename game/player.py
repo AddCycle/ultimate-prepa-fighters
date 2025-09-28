@@ -41,22 +41,6 @@ class Player:
 
         # quit signal
         self.quit = False
-        # self.looping_anims = {
-        #     "idle_right": True,
-        #     "idle_left": True,
-        #     "run_right": True,
-        #     "run_left": True,
-        #     "fall_right": True,
-        #     "fall_left": True,
-        #     "jump_right": False,
-        #     "jump_left": False,
-        #     "doublejump_right": False,
-        #     "doublejump_left": False,
-        #     "melee_right": False,
-        #     "melee_left": False,
-        #     "hit_right": False,
-        #     "hit_left": False,
-        # }
 
     def alive(self):
         """Send an ALIVE signal to server to prevent disconnect."""

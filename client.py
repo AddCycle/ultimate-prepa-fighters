@@ -6,13 +6,15 @@ import sys
 from game.settings import *
 from game.player import Player
 from ui import renderer
-from ui import menu
+from ui import menu, button
+from game import inputs
 import utils.logger
 
 # Client pygame init
-pygame.init()
+pygame.mixer.init()  # music
 pygame.display.init()  # video
 pygame.font.init()  # font
+pygame.init()
 
 # window setup
 icon_surface = pygame.image.load("icon.png")
@@ -32,20 +34,32 @@ attack_surface_left = pygame.transform.flip(
 ).convert_alpha()
 
 # icon loading
-player_sprite = pygame.image.load("icon.png").convert_alpha()
+player_sprite = icon_surface.convert_alpha()
 player_sprite = pygame.transform.scale(player_sprite, (64, 64))
 
 # bg loading
 bg_img = pygame.image.load("bg.png").convert_alpha()
 
+# pause menu
+pause_menu = menu.Menu(screen, "PAUSE")
+pause_menu.addButton(button.Button("Resume"))
+pause_menu.addButton(button.Button("Quit"))
+
 # main menu selection
-choice = menu.show_main_menu(screen, player_sprite)
-if choice == 0:
+current_menu = menu.Menu(screen, "Ultimate Prepa Fighters")
+current_menu.addButton(button.Button("PLAY"))
+current_menu.addButton(button.Button("QUIT"))
+choice = current_menu.display()
+if choice == 1:
     pygame.quit()
     sys.exit()
 
 # character menu selection
-char_choice = menu.show_character_menu(screen, player_sprite)
+current_menu.title = "Choose your character"
+current_menu.addButton(button.Button("FROG"))
+current_menu.addButton(button.Button("QVAL"))
+current_menu.addButton(button.Button("PASS"))
+char_choice = current_menu.display()
 
 # network udp client socket
 client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -171,6 +185,21 @@ last_send = ""
 dt = 0  # delta_time
 last_alive = time.time()  # for timeout/lost connnection
 
+
+# each 5 seconds sending a hearbeat signal to server knowing client haven't lost connection
+def heartbeat_loop():
+    global last_alive, running
+    while running:
+        if time.time() - last_alive > 5:
+            client.sendto("ALIVE".encode(), server_addr)
+            last_alive = time.time()
+        time.sleep(0.1)
+
+
+# sending heartbeat (another thread)
+threading.Thread(target=heartbeat_loop, daemon=True).start()
+
+
 # game loop
 while running:
     # when quitting window
@@ -183,21 +212,14 @@ while running:
     # one-time pressed keys event
     just_pressed_keys = pygame.key.get_just_pressed()
 
-    # input handling
-    send_msg = "STOP"
-    if keys[pygame.K_a] or keys[pygame.K_LEFT]:
-        send_msg = "LEFT"
-    elif keys[pygame.K_d] or keys[pygame.K_RIGHT]:
-        send_msg = "RIGHT"
-    if just_pressed_keys[pygame.K_SPACE] or just_pressed_keys[pygame.K_UP]:
-        send_msg += "|JUMP"
-    elif keys[pygame.K_s] or keys[pygame.K_DOWN]:
-        send_msg += "|DOWN"
-    if just_pressed_keys[pygame.K_c]:
-        send_msg += "|MELEE"
+    # command handling
+    send_msg = inputs.handle_inputs(keys, just_pressed_keys)
 
     if keys[pygame.K_ESCAPE]:
-        running = False
+        pause_choice = pause_menu.display()
+        print(pause_choice)
+        if pause_choice == 1:
+            running = False
 
     if just_pressed_keys[pygame.K_1]:
         debug = not debug
@@ -207,11 +229,8 @@ while running:
         client.sendto(send_msg.encode(), server_addr)
         last_send = send_msg
 
-    # each 5 seconds sending a hearbeat signal to server knowing client haven't lost connection
-    if time.time() - last_alive > 5:
-        client.sendto("ALIVE".encode(), server_addr)
-        last_alive = time.time()
-
+    # draw black
+    screen.fill("black")
     # draw bg
     renderer.draw_background(screen, bg_img)
 

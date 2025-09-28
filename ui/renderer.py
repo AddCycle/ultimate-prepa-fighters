@@ -38,9 +38,6 @@ def draw_players(
         if debug:
             pygame.draw.rect(surface, color, (x, y, p.w, p.h))
 
-        # Flip frame if facing left
-        print(f"player facing : {p.facing}")
-
         surface.blit(frame, (x, y))
         if font:
             render_text_at(
