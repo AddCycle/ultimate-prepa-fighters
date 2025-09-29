@@ -92,84 +92,14 @@ def listen_loop():
 
         try:
             buffer += data.decode()
+            last_alive = time.time() # FIXME : optional if there is a bug it's this line
         except Exception as e:
             print("[CLIENT]: listen_loop: Decode error:", e)
             continue
 
         while "\n" in buffer:
             line, buffer = buffer.split("\n", 1)
-            if my_id is None and line.startswith("ID:"):
-                my_id = int(line.split(":")[1])
-                print(f"[CLIENT] Player ID: {my_id}")
-
-                if my_id is not None and my_id not in all_players:
-                    all_players[my_id] = Player(my_id)
-
-                all_players[my_id].char_choice = char_choice
-                sprite_map = {0: "frog.png", 1: "qval.png", 2: "pass.png"}
-                all_players[my_id].load_sprites(sprite_map[char_choice])
-                continue
-            else:
-                for p in line.split(";"):
-                    if not p:
-                        continue
-                    if p.startswith("QUIT:"):
-                        removed_ids = p.split(":")[1].split(",")
-                        for rid in removed_ids:
-                            if rid:
-                                rid_int = int(rid)
-                                if rid_int in all_players:
-                                    del all_players[rid_int]
-                        continue  # skip normal player updates for QUIT line
-                    try:
-                        # received players data parsing
-                        parts = p.split(",")
-                        pid = int(parts[0])
-                        x, y = float(parts[1]), float(parts[2])
-                        score = int(parts[3])
-                        anim = parts[4]
-
-                        # create or update Player object based on server data
-                        if pid not in all_players:
-                            all_players[pid] = Player(pid)  # instantiate with server ID
-                        p = all_players[pid]
-
-                        # set server-authoritative values
-                        p.x, p.y = x, y
-                        p.score = score
-
-                        # setting the new animation to the beginning
-                        if p.current_anim != anim:
-                            p.current_anim = anim
-                            p.anim_frame = 0
-                            p.anim_timer = 0.0
-
-                        if "_left" in anim:
-                            p.facing = "left"
-                        elif "_right" in anim:
-                            p.facing = "right"
-
-                        if len(parts) >= 6:
-                            server_char_choice = int(parts[5])
-                            if p.char_choice != server_char_choice:
-                                p.char_choice = server_char_choice
-                                if p.id == my_id:
-                                    pass
-                                else:
-                                    sprite_map = {
-                                        0: "frog.png",
-                                        1: "qval.png",
-                                        2: "pass.png",
-                                    }
-                                    p.load_sprites(sprite_map[server_char_choice])
-
-                        if len(parts) == 10:
-                            mx, my, mw, mh = map(float, parts[6:])
-                            p.melee_rect = (mx, my, mw, mh)
-                        else:
-                            p.melee_rect = None
-                    except Exception as e:
-                        print("Parse error:", p, e)
+            my_id = game_logic_client.handle_server_message(line, all_players, my_id, char_choice)
 
 # starting listening on another thread (performance optimizing)
 threading.Thread(target=listen_loop, daemon=True).start()
