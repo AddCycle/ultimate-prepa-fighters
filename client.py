@@ -5,10 +5,8 @@ import time
 import sys
 from game.settings import *
 from game.player import Player
-from ui import renderer
-from ui import menu, button
-from game import inputs
-import utils.logger
+from ui import renderer, menu, button
+from game import inputs, game_logic_client
 
 # Client pygame init
 pygame.mixer.init()  # music
@@ -81,7 +79,6 @@ client.sendto("HELLO".encode(), server_addr)
 
 # after getting char_choice in client
 client.sendto(f"CHAR:{char_choice}".encode(), server_addr)
-
 
 # listen thread (listen all server data)
 def listen_loop():
@@ -173,7 +170,6 @@ def listen_loop():
                             p.melee_rect = None
                     except Exception as e:
                         print("Parse error:", p, e)
-
 
 # starting listening on another thread (performance optimizing)
 threading.Thread(target=listen_loop, daemon=True).start()
