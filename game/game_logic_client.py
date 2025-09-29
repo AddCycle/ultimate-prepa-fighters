@@ -1,4 +1,87 @@
+import pygame
+import socket
 from game.player import Player
+from game import inputs
+from ui import renderer
+from game.settings import *
+
+class GameClient:
+    def __init__(self, screen:pygame.surface.Surface, server_addr, char_choice, pause_menu) -> None:
+        self.screen = screen
+        self.server_addr = server_addr
+        self.char_choice = char_choice
+        self.running = True
+        self.clock = pygame.time.Clock()
+        self.dt = 0
+        self.last_send = ""
+        self.debug = False
+        self.font = pygame.Font("PressStart2P.ttf")
+        self.pause_menu = pause_menu
+    
+    def handle_events(self):
+        # when quitting window
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running = False
+    
+    def update(self, all_players: dict[int, Player], my_id: int | None, client: socket.socket):
+        # keydown event handling
+        keys = pygame.key.get_pressed()
+        # one-time pressed keys event
+        just_pressed_keys = pygame.key.get_just_pressed()
+
+        # command handling
+        send_msg = inputs.handle_inputs(keys, just_pressed_keys)
+        # sending local data to server
+        if send_msg != self.last_send:
+            client.sendto(send_msg.encode(), self.server_addr)
+            self.last_send = send_msg
+
+        if keys[pygame.K_ESCAPE]:
+            pause_choice = self.pause_menu.display()
+            if pause_choice == 1:
+                self.running = False
+
+        if just_pressed_keys[pygame.K_1]:
+            self.debug = not self.debug
+    
+    def render(self, all_players, my_id, bg_img, attack_surface_right, attack_surface_left):
+        # draw black
+        self.screen.fill("black")
+        # draw bg
+        renderer.draw_background(self.screen, bg_img)
+
+        # floor
+        if self.debug:
+            pygame.draw.rect(
+                self.screen, "purple", (0, GROUND_Y + 32 * 3, self.screen.get_width(), 10)
+            )  # ground
+
+        # trying to interpolate other players positions (for smoothing lags)
+        renderer.draw_players(
+            self.screen,
+            all_players,
+            my_id,
+            self.dt,
+            attack_surface_right,
+            attack_surface_left,
+            self.debug,
+            self.font,
+        )
+
+        pygame.display.flip()  # updating screen
+    
+    def run(self, all_players: dict[int, Player], my_id:int | None, client:socket.socket, bg_img, attack_surface_right, attack_surface_left):
+        while self.running:
+            # window quit
+            self.handle_events()
+
+            self.update(all_players, my_id, client)
+
+            # rendering
+            self.render(all_players, my_id, bg_img, attack_surface_right, attack_surface_left)
+
+            self.dt = self.clock.tick(FPS) / 1000
 
 def handle_server_message(line: str, all_players: dict[int, Player], my_id: int | None, char_choice: int):
     if my_id is None and line.startswith("ID:"):
