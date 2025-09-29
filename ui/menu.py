@@ -30,7 +30,7 @@ class Menu:
             btn.render(self.screen, self.font)
 
     def clear(self):
-        self.buttons.clear()
+        # self.buttons.clear()
         self.screen.fill("black")
 
     def reset_buttons(self):
@@ -77,5 +77,23 @@ class Menu:
             )
             pygame.display.flip()  # updating screen
 
-        self.clear()
         return self.choice
+
+class PauseMenu(Menu):
+    def __init__(self, screen: pygame.Surface, title: str) -> None:
+        super().__init__(screen, title)
+        self.addButton(Button("Resume"))
+        self.addButton(Button("Quit"))
+
+class MainMenu(Menu):
+    def __init__(self, screen: pygame.Surface, title: str) -> None:
+        super().__init__(screen, title)
+        self.addButton(Button("PLAY"))
+        self.addButton(Button("QUIT"))
+
+class CharacterMenu(Menu):
+    def __init__(self, screen: pygame.Surface, title: str) -> None:
+        super().__init__(screen, title)
+        self.addButton(Button("FROG"))
+        self.addButton(Button("QVAL"))
+        self.addButton(Button("PASS"))

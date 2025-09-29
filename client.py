@@ -40,25 +40,18 @@ player_sprite = pygame.transform.scale(player_sprite, (64, 64))
 bg_img = pygame.image.load("bg.png").convert_alpha()
 
 # pause menu
-pause_menu = menu.Menu(screen, "PAUSE")
-pause_menu.addButton(button.Button("Resume"))
-pause_menu.addButton(button.Button("Quit"))
+pause_menu = menu.PauseMenu(screen, "PAUSE")
 
 # main menu selection
-current_menu = menu.Menu(screen, "Ultimate Prepa Fighters")
-current_menu.addButton(button.Button("PLAY"))
-current_menu.addButton(button.Button("QUIT"))
-choice = current_menu.display()
+main_menu = menu.MainMenu(screen, "Ultimate Prepa Fighters")
+choice = main_menu.display()
 if choice == 1:
     pygame.quit()
     sys.exit()
 
-# character menu selection
-current_menu.title = "Choose your character"
-current_menu.addButton(button.Button("FROG"))
-current_menu.addButton(button.Button("QVAL"))
-current_menu.addButton(button.Button("PASS"))
-char_choice = current_menu.display()
+# character menu
+char_menu = menu.CharacterMenu(screen, "Choose your character")
+char_choice = char_menu.display()
 
 # network udp client socket
 client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -87,12 +80,15 @@ client.sendto(f"CHAR:{char_choice}".encode(), server_addr)
 
 # listen thread (listen all server data)
 def listen_loop():
-    global my_id, buffer, all_players, last_alive
-    while True:
+    global my_id, buffer, all_players, last_alive, running
+    while running:
         try:
             data, _ = client.recvfrom(4096)
+        except OSError:
+            break
         except Exception as e:
-            print("listen_loop, Recv error:", e)
+            if running:  # ignore errors only during shutdown
+                print("listen_loop, Recv error:", e)
             continue
 
         try:
@@ -106,7 +102,8 @@ def listen_loop():
             my_id = game_logic_client.handle_server_message(line, all_players, my_id, char_choice)
 
 # starting listening on another thread (performance optimizing)
-threading.Thread(target=listen_loop, daemon=True).start()
+listen_thread = threading.Thread(target=listen_loop)
+listen_thread.start()
 
 # each 5 seconds sending a hearbeat signal to server knowing client haven't lost connection
 def heartbeat_loop():
@@ -119,16 +116,20 @@ def heartbeat_loop():
 
 
 # sending heartbeat (another thread)
-threading.Thread(target=heartbeat_loop, daemon=True).start()
+heartbeat_thread = threading.Thread(target=heartbeat_loop)
+heartbeat_thread.start()
 
 # GameClient instance
 game = GameClient(screen, server_addr, char_choice, pause_menu)
 game.run(all_players, my_id, client, bg_img, attack_surface_right, attack_surface_left) # game loop
 
+running = False
 client.sendto(
     "QUIT".encode(), server_addr
 )  # sending to server a quit signal for client disconnect
+client.close()  # closing socket connection
+listen_thread.join()
+heartbeat_thread.join()
 
 pygame.quit()  # quitting pygame subsystems
-client.close()  # closing socket connection
 sys.exit()  # exiting the program
