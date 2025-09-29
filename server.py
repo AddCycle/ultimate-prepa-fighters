@@ -62,6 +62,7 @@ def physics_loop():
                 p.current_anim = p.decide_animation()
             
             game_logic.cleanup_players(players, server)
+            game_logic.update_players(players) # for collisions
 
             # broadcasting data to each player the everyone state
             send_dt += dt

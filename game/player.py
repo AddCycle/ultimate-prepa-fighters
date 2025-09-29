@@ -32,6 +32,8 @@ class Player:
         self.last_melee: float = 0.0
         self.last_hit: float = 0.0
         self.melee_rect: tuple[float, float, float, float] | None = None
+        self.melee_pending = False
+        self.melee_delay_counter = 0
 
         # animation state
         self.animations: dict[str, list[pygame.Surface]] = {}
@@ -73,6 +75,13 @@ class Player:
             self.x = 0
         elif self.x > SCREEN_WIDTH - self.w:
             self.x = SCREEN_WIDTH - self.w
+        
+        # handle melee delay
+        if self.melee_pending:
+            self.melee_delay_counter -= 1
+            if self.melee_delay_counter <= 0:
+                self.trigger_hit_melee()
+                self.melee_pending = False
 
         # melee duration timeout
         if self.last_melee > 0 and time.time() - self.last_melee > MELEE_DURATION:
@@ -99,15 +108,20 @@ class Player:
             self.vy = -JUMP_SPEED
         elif cmd == "MELEE":
             self.perform_melee()
-
-    def perform_melee(self):
-        """Compute melee attack; sets self.melee_rect."""
+    
+    def trigger_hit_melee(self):
         melee_width = self.w // 2
         melee_height = self.h
         facing_right = self.facing == "right"
         hit_x = self.x + self.w if facing_right else self.x - melee_width
         hit_y = self.y
         self.melee_rect = (hit_x, hit_y, melee_width, melee_height)
+        self.last_melee = time.time()
+
+    def perform_melee(self):
+        """Compute melee attack; sets self.melee_rect."""
+        self.melee_pending = True
+        self.melee_delay_counter = MELEE_DELAY_FRAMES * 15
         self.last_melee = time.time()
 
     def load_sprites(self, sheet_path="frog.png"):

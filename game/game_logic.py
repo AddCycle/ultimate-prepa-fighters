@@ -15,24 +15,39 @@ def handle_command(players: dict[str, Player], player: Player, cmd):
         # player inputs
         player.handle_input(cmd)
         # check collisions with other players
-        if (
-            cmd == "MELEE" and player.melee_rect
-        ):  # only if player is attacking
+        # FIXME : moved this from to constantly check hitboxes inside update_players
+        # if (
+        #     cmd == "MELEE" and player.melee_rect
+        # ):  # only if player is attacking
+        #     check_melee(players, player)
+
+def update_players(players: dict[str, Player]):
+    for player in players.values():
+        if player.melee_rect:  # only if hitbox exists
             check_melee(players, player)
 
 # apply melee results to players
 def check_melee(players: dict[str, Player], player: Player):
+    if not player.melee_rect:
+        return
+
     mx, my, mw, mh = player.melee_rect # type: ignore
+    now = time.time()
     for other in players.values():
-        if other is not player:
-            ox, oy, ow, oh = other.x, other.y, other.w, other.h
-            if (mx < ox + ow and mx + mw > ox and my < oy + oh and my + mh > oy):
-                print(
-                    f"[SERVER] Player {player.id} hit Player {other.id}!"
-                )
-                # TODO : instead of a score, just decrease life points from other.health
-                other.last_hit = time.time()  # hit animation
-                player.score += 1
+        if other.id == player.id:
+            continue  # skip self
+
+        # skip if other is still in hit animation (invincible)
+        if other.last_hit > 0 and now - other.last_hit < HIT_STUN_DURATION:
+            continue
+
+        ox, oy, ow, oh = other.x, other.y, other.w, other.h
+        if (mx < ox + ow and mx + mw > ox and my < oy + oh and my + mh > oy):
+            print(f"[SERVER] Player {player.id} hit Player {other.id}!")
+            other.last_hit = now  # start hit animation / invincibility
+            # TODO : instead of a score, just decrease life points from other.health
+            player.score += 1
+            print("player score")
 
 def cleanup_players(players: dict[str, Player], server: Server):
     now = time.time()
