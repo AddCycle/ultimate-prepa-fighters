@@ -47,7 +47,7 @@ class GameClient:
         if just_pressed_keys[pygame.K_1]:
             self.debug = not self.debug
     
-    def render(self, all_players, bg_img, attack_surface_right, attack_surface_left):
+    def render(self, all_players, bg_img, attack_surface_right, attack_surface_left, arrow_sprite):
         # draw black
         self.screen.fill("black")
         # draw bg
@@ -67,13 +67,14 @@ class GameClient:
             self.dt,
             attack_surface_right,
             attack_surface_left,
+            arrow_sprite,
             self.debug,
             self.font,
         )
 
         pygame.display.flip()  # updating screen
     
-    def run(self, all_players: dict[int, Player], client:socket.socket, bg_img, attack_surface_right, attack_surface_left):
+    def run(self, all_players: dict[int, Player], client:socket.socket, bg_img, attack_surface_right, attack_surface_left, arrow_sprite):
         while self.running:
             # window quit
             self.handle_events()
@@ -81,7 +82,7 @@ class GameClient:
             self.update(all_players, client)
 
             # rendering
-            self.render(all_players, bg_img, attack_surface_right, attack_surface_left)
+            self.render(all_players, bg_img, attack_surface_right, attack_surface_left, arrow_sprite)
 
             self.dt = self.clock.tick(FPS) / 1000
 

@@ -1,12 +1,8 @@
 import pygame
-import time
 from game import player
-from game import settings
-
 
 def text(text: str, color: str, font: pygame.font.Font) -> pygame.Surface:
     return font.render(text, True, color, "black")
-
 
 def render_text_at(
     surface: pygame.Surface, txt, x, y, color, font: pygame.font.Font, bg="black"
@@ -15,17 +11,11 @@ def render_text_at(
     rect = sf.get_rect(center=(x, y))
     surface.blit(sf, rect)
 
+def render_player_arrow(screen: pygame.surface.Surface, player:player.Player, arrow_sprite:pygame.surface.Surface):
+    offset = player.w // 2 - arrow_sprite.get_width() // 2
+    screen.blit(arrow_sprite, (player.x + offset, player.y - 30))
 
-def draw_players(
-    surface: pygame.Surface,
-    players: dict[int, player.Player],
-    my_id,
-    dt,
-    attack_right,
-    attack_left,
-    debug=False,
-    font=None,
-):
+def draw_players(surface: pygame.Surface,players: dict[int, player.Player],my_id,dt,attack_right,attack_left,arrow_sprite,debug=False,font=None):
     X = surface.get_width()
     y_offset = 10
     for pid, p in players.items():
@@ -33,7 +23,6 @@ def draw_players(
         x, y = p.x, p.y
 
         frame = p.get_current_frame()
-        print(f"my_id: {my_id}, pid: {pid}")
         color = "red" if pid == my_id else "blue"
         score_color = "green" if pid == my_id else "white"
         if debug:
@@ -45,6 +34,9 @@ def draw_players(
                 surface, f"Score: {p.score}", X // 2, y_offset, score_color, font
             )
         y_offset += 30
+
+        if pid == my_id:
+            render_player_arrow(surface, p, arrow_sprite)
 
         if debug and p.melee_rect:
             mx, my, mw, mh = p.melee_rect

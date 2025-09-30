@@ -32,6 +32,8 @@ attack_surface_left = pygame.transform.flip(
     attack_surface_right, True, False
 ).convert_alpha()
 
+arrow_sprite = pygame.image.load("arrow.png").convert_alpha()
+
 # icon loading
 player_sprite = icon_surface.convert_alpha()
 player_sprite = pygame.transform.scale(player_sprite, (64, 64))
@@ -100,7 +102,6 @@ def listen_loop():
         while "\n" in buffer:
             line, buffer = buffer.split("\n", 1)
             my_id = game_logic_client.handle_server_message(line, all_players, my_id, char_choice)
-            print(f"my_id is now : {my_id}")
 
 # starting listening on another thread (performance optimizing)
 listen_thread = threading.Thread(target=listen_loop)
@@ -126,7 +127,7 @@ while my_id is None:
 
 # GameClient instance
 game = GameClient(screen, server_addr, char_choice, pause_menu, my_id)
-game.run(all_players, client, bg_img, attack_surface_right, attack_surface_left) # game loop
+game.run(all_players, client, bg_img, attack_surface_right, attack_surface_left, arrow_sprite) # game loop
 
 running = False
 client.sendto(
