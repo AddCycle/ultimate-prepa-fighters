@@ -2,11 +2,12 @@ import pygame
 import socket
 from game.player import Player
 from game import inputs
-from ui import renderer
+from ui import renderer,menu
 from game.settings import *
 
 class GameClient:
-    def __init__(self, screen:pygame.surface.Surface, server_addr, char_choice, pause_menu) -> None:
+    def __init__(self, screen:pygame.surface.Surface, server_addr, char_choice, pause_menu, id) -> None:
+        self.my_id = id
         self.screen = screen
         self.server_addr = server_addr
         self.char_choice = char_choice
@@ -16,7 +17,7 @@ class GameClient:
         self.last_send = ""
         self.debug = False
         self.font = pygame.Font("PressStart2P.ttf")
-        self.pause_menu = pause_menu
+        self.pause_menu: menu.Menu = pause_menu
     
     def handle_events(self):
         # when quitting window
@@ -24,7 +25,8 @@ class GameClient:
             if event.type == pygame.QUIT:
                 self.running = False
     
-    def update(self, all_players: dict[int, Player], my_id: int | None, client: socket.socket):
+    def update(self, all_players: dict[int, Player], client: socket.socket):
+        # my_id = self.my_id
         # keydown event handling
         keys = pygame.key.get_pressed()
         # one-time pressed keys event
@@ -45,7 +47,7 @@ class GameClient:
         if just_pressed_keys[pygame.K_1]:
             self.debug = not self.debug
     
-    def render(self, all_players, my_id, bg_img, attack_surface_right, attack_surface_left):
+    def render(self, all_players, bg_img, attack_surface_right, attack_surface_left):
         # draw black
         self.screen.fill("black")
         # draw bg
@@ -61,7 +63,7 @@ class GameClient:
         renderer.draw_players(
             self.screen,
             all_players,
-            my_id,
+            self.my_id,
             self.dt,
             attack_surface_right,
             attack_surface_left,
@@ -71,15 +73,15 @@ class GameClient:
 
         pygame.display.flip()  # updating screen
     
-    def run(self, all_players: dict[int, Player], my_id:int | None, client:socket.socket, bg_img, attack_surface_right, attack_surface_left):
+    def run(self, all_players: dict[int, Player], client:socket.socket, bg_img, attack_surface_right, attack_surface_left):
         while self.running:
             # window quit
             self.handle_events()
 
-            self.update(all_players, my_id, client)
+            self.update(all_players, client)
 
             # rendering
-            self.render(all_players, my_id, bg_img, attack_surface_right, attack_surface_left)
+            self.render(all_players, bg_img, attack_surface_right, attack_surface_left)
 
             self.dt = self.clock.tick(FPS) / 1000
 

@@ -33,6 +33,7 @@ def draw_players(
         x, y = p.x, p.y
 
         frame = p.get_current_frame()
+        print(f"my_id: {my_id}, pid: {pid}")
         color = "red" if pid == my_id else "blue"
         score_color = "green" if pid == my_id else "white"
         if debug:

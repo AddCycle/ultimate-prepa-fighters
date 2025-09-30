@@ -5,8 +5,8 @@ import time
 import sys
 from game.settings import *
 from game.player import Player
-from ui import renderer, menu, button
-from game import inputs, game_logic_client
+from ui import menu
+from game import game_logic_client
 from game.game_logic_client import GameClient
 
 # Client pygame init
@@ -100,6 +100,7 @@ def listen_loop():
         while "\n" in buffer:
             line, buffer = buffer.split("\n", 1)
             my_id = game_logic_client.handle_server_message(line, all_players, my_id, char_choice)
+            print(f"my_id is now : {my_id}")
 
 # starting listening on another thread (performance optimizing)
 listen_thread = threading.Thread(target=listen_loop)
@@ -119,9 +120,13 @@ def heartbeat_loop():
 heartbeat_thread = threading.Thread(target=heartbeat_loop)
 heartbeat_thread.start()
 
+# wait for the id from server
+while my_id is None:
+    time.sleep(0.05)
+
 # GameClient instance
-game = GameClient(screen, server_addr, char_choice, pause_menu)
-game.run(all_players, my_id, client, bg_img, attack_surface_right, attack_surface_left) # game loop
+game = GameClient(screen, server_addr, char_choice, pause_menu, my_id)
+game.run(all_players, client, bg_img, attack_surface_right, attack_surface_left) # game loop
 
 running = False
 client.sendto(

@@ -44,7 +44,7 @@ def check_melee(players: dict[str, Player], player: Player):
         ox, oy, ow, oh = other.x, other.y, other.w, other.h
         if (mx < ox + ow and mx + mw > ox and my < oy + oh and my + mh > oy):
             print(f"[SERVER] Player {player.id} hit Player {other.id}!")
-            other.last_hit = now  # start hit animation / invincibility
+            other.last_hit = now # start hit animation / invincibility
             # TODO : instead of a score, just decrease life points from other.health
             player.score += 1
             print("player score")
