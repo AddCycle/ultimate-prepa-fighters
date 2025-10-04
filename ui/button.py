@@ -13,6 +13,8 @@ class Button:
         color = "white"
         if self.active:
             color = "green"
+            screen.blit(button_tex.subsurface((0,20*scale), (32*scale,10*scale)), (self.center[0] - 32*scale // 4, self.center[1] - 10*scale // 4))
+        else:
+            screen.blit(button_tex.subsurface((0,0), (32*scale,10*scale)), (self.center[0] - 32*scale // 4, self.center[1] - 10*scale // 4))
         text_surface = renderer.text(self.text, color, font)
-        screen.blit(button_tex.subsurface((0,0), (32*scale,10*scale)), (self.center[0] - 32*scale // 4, self.center[1] - 10*scale // 4))
         screen.blit(text_surface, self.center)

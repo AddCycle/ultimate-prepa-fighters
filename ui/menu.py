@@ -31,10 +31,8 @@ class Menu:
     def render(self):
         for btn in self.buttons:
             btn.render(self.screen, self.scale, self.button_tex, self.font)
-            # btn.render(self.screen, self.font)
 
     def clear(self):
-        # self.buttons.clear()
         self.screen.fill("black")
 
     def reset_buttons(self):
