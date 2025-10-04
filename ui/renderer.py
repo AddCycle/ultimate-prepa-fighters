@@ -2,12 +2,12 @@ import pygame
 from game import player
 
 def text(text: str, color: str, font: pygame.font.Font) -> pygame.Surface:
-    return font.render(text, True, color, "black")
+    return font.render(text, True, color)
 
 def render_text_at(
-    surface: pygame.Surface, txt, x, y, color, font: pygame.font.Font, bg="black"
+    surface: pygame.Surface, txt, x, y, color, font: pygame.font.Font
 ):
-    sf = font.render(txt, True, color, bg)
+    sf = font.render(txt, True, color)
     rect = sf.get_rect(center=(x, y))
     surface.blit(sf, rect)
 

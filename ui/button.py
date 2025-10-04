@@ -9,10 +9,10 @@ class Button:
         self.text = text
         self.active: bool = False
 
-    def render(self, screen: pygame.Surface, button_tex:pygame.surface.Surface, font: pygame.font.Font) -> None:
+    def render(self, screen: pygame.Surface, scale:int, button_tex:pygame.surface.Surface, font: pygame.font.Font) -> None:
         color = "white"
         if self.active:
             color = "green"
         text_surface = renderer.text(self.text, color, font)
-        screen.blit(button_tex.subsurface((0,0), (32,10)), self.center)
+        screen.blit(button_tex.subsurface((0,0), (32*scale,10*scale)), (self.center[0] - 32*scale // 4, self.center[1] - 10*scale // 4))
         screen.blit(text_surface, self.center)
