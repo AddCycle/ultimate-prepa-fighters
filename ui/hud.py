@@ -7,4 +7,5 @@ class Hud:
         self.heart = pygame.transform.scale(self.heart, (64,64))
     
     def render(self, screen: pygame.surface.Surface) -> None:
-        screen.blit(self.heart)
+        for i in range(self.health):
+            screen.blit(self.heart, (0, i * 64))
