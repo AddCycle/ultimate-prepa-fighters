@@ -2,7 +2,7 @@ import pygame
 
 
 # handling inputs returning commands
-def handle_inputs(keys, just_pressed_keys, joystick: pygame.joystick.JoystickType, events: list[pygame.Event]) -> str:
+def handle_inputs(keys, just_pressed_keys, joystick: pygame.joystick.JoystickType | None, events: list[pygame.Event]) -> str:
     send_msg = "STOP"
     if keys[pygame.K_a] or keys[pygame.K_LEFT]:
         send_msg = "LEFT"
@@ -16,7 +16,7 @@ def handle_inputs(keys, just_pressed_keys, joystick: pygame.joystick.JoystickTyp
         elif x_axis > 0.3:
             send_msg = "RIGHT"
 
-        y_axis = joystick.get_axis(1)  # usually left stick horizontal
+        y_axis = joystick.get_axis(1)  # usually left stick vertical
         if y_axis > 0.3:
             send_msg += "|DOWN"
     
@@ -36,15 +36,4 @@ def handle_inputs(keys, just_pressed_keys, joystick: pygame.joystick.JoystickTyp
         elif e.type == pygame.JOYAXISMOTION:
             print("Axis", e.axis, e.value)
     
-    # for e in events:
-    #     # if e.type == pygame.JOYAXISMOTION: print('Axis', e.axis, e.value)
-    #     # elif e.type == pygame.JOYBUTTONDOWN: print('Button', e.button, 'down')
-    #     # elif e.type == pygame.JOYBUTTONUP: print('Button', e.button, 'up')
-    #     if e.type == pygame.JOYHATMOTION:
-    #         hx, hy = e.value
-    #         if hx == -1: send_msg = "LEFT"
-    #         elif hx == 1: send_msg = "RIGHT"
-    #         if hy == 1: send_msg += "|JUMP"
-    #         elif hy == -1: send_msg += "|DOWN"
-
     return send_msg

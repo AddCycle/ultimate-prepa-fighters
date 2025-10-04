@@ -10,6 +10,7 @@ class Menu:
         self.middle = (screen.get_width() // 2, screen.get_height() // 2)
         self.font = pygame.font.Font("PressStart2P.ttf", 20)
         self.title = title
+        self.button_tex = pygame.image.load("buttons.png").convert_alpha()
         self.buttons: list[Button] = []
         self.choice = 0
         self.spacing = 50
@@ -27,7 +28,7 @@ class Menu:
 
     def render(self):
         for btn in self.buttons:
-            btn.render(self.screen, self.font)
+            btn.render(self.screen, self.button_tex, self.font)
 
     def clear(self):
         # self.buttons.clear()

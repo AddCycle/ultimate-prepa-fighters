@@ -19,8 +19,13 @@ class GameClient:
         self.font = pygame.Font("PressStart2P.ttf")
         self.pause_menu: menu.Menu = pause_menu
         self.hud: hud.Hud = hud.Hud(1)
-        self.joystick = pygame.joystick.Joystick(0)
-        self.joystick.init()
+        if pygame.joystick.get_count() > 0:
+            self.joystick = pygame.joystick.Joystick(0)
+            self.joystick.init()
+            print("[INFO] Joystick connected:", self.joystick.get_name())
+        else:
+            self.joystick = None
+            print("[INFO] No joystick detected.")
     
     def handle_events(self, events: list[pygame.Event]):
         # when quitting window
@@ -29,7 +34,17 @@ class GameClient:
                 self.running = False
     
     def update(self, all_players: dict[int, Player], client: socket.socket, events: list[pygame.Event]):
-        # my_id = self.my_id
+        # hotplug for joysticks
+        for e in events:
+            if e.type == pygame.JOYDEVICEADDED:
+                self.joystick = pygame.joystick.Joystick(e.device_index)
+                self.joystick.init()
+                print("Joystick added:", self.joystick.get_name())
+
+            elif e.type == pygame.JOYDEVICEREMOVED:
+                print("Joystick removed.")
+                self.joystick = None
+
         # keydown event handling
         keys = pygame.key.get_pressed()
         
