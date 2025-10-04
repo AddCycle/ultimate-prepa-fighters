@@ -5,22 +5,27 @@ from game.settings import *
 from network.network import Server
 
 # handle all commands <- client
-def handle_command(players: dict[str, Player], player: Player, cmd):
+def handle_command(players: dict[str, Player], entities: dict[int, Entity], next_entity_id:int, player: Player, cmd):
     if cmd == "ALIVE":
         player.alive()
     elif cmd == "QUIT":
         pid = player.id
         player.quit = True
         print(f"[SERVER] Player {pid} quit")
+    elif cmd == "FIRE":
+        # spawn near the player
+        e = Entity(next_entity_id, player.x + 50, player.y, "orb")
+        # give it a simple velocity (rightwards)
+        e.vx = 200
+        e.vy = 0
+        entities[e.id] = e
+        next_entity_id += 1
+        print(f"[SERVER] Player {player.id} summoned entity {e.id}!")
     else:
         # player inputs
         player.handle_input(cmd)
         # check collisions with other players
-        # FIXME : moved this from to constantly check hitboxes inside update_players
-        # if (
-        #     cmd == "MELEE" and player.melee_rect
-        # ):  # only if player is attacking
-        #     check_melee(players, player)
+    return next_entity_id
 
 def update_players(players: dict[str, Player]):
     for player in players.values():
@@ -88,3 +93,14 @@ def broadcast_state(players: dict[str, Player], server: Server, entities: dict[i
 
     for addr in players.keys():
         server.socket.sendto((state + "\n").encode(), addr)
+
+def handle_entity_collision(entity: Entity, player: Player, entities, players: dict[str, Player], server: Server):
+    # Example effect: increase score, remove entity
+    player.score += 1
+    entity.alive = False
+    print(f"[SERVER] Player {player.id} score: {player.score}")
+
+    # Notify clients
+    for addr in players.keys():
+        server.socket.sendto(f"SCORE:{player.id},{player.score}\n".encode(), addr)
+        server.socket.sendto(f"KILL:{entity.id}\n".encode(), addr)

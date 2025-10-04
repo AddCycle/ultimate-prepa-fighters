@@ -26,7 +26,7 @@ lock = threading.Lock()
 
 # recv client data function (thread)
 def receive_loop():
-    global next_id
+    global next_id, next_entity_id
     while True:
         try:
             data, addr = server.socket.recvfrom(1024)
@@ -58,7 +58,7 @@ def receive_loop():
             else:
                 # handling messages <- client
                 for cmd in data.split("|"):
-                    game_logic.handle_command(players, player, cmd)
+                    next_entity_id = game_logic.handle_command(players, entities, next_entity_id, player, cmd)
 
 # handling client physics (thread)
 def physics_loop():
@@ -81,16 +81,35 @@ def physics_loop():
                 game_logic.broadcast_state(players, server, entities)
                 send_dt = 0
             
+            for e in list(entities.values()):
+                e.update(dt)
+
+                for pid, p in players.items():
+                    dx = e.x - p.x
+                    dy = e.y - p.y
+                    dist_sq = dx * dx + dy * dy
+                    if dist_sq < (ENTITY_RADIUS + PLAYER_RADIUS) ** 2:
+                        print(f"[SERVER] Entity {e.id} hit Player {pid}")
+                        game_logic.handle_entity_collision(e, p, entities, players, server)
+                if not e.alive:
+                    del entities[e.id]
+                    print(f"[SERVER] Entity {e.id} expired")
+
+                    for addr in players.keys():
+                        kill_msg = f"KILL:{e.id}\n"
+                        server.socket.sendto(kill_msg.encode(), addr)
+
+            
             # entities (test) FIXME
-            now = time.time()
-            if now - last_spawn_time >= spawn_interval and len(entities) < max_entities:
-                x = random.randint(100, 700)
-                y = random.randint(100, 400)
-                e = Entity(next_entity_id, x, y, "orb")
-                entities[e.id] = e
-                next_entity_id += 1
-                last_spawn_time = now
-                print(f"[SERVER] Spawned entity {e.id} at ({x}, {y})")
+            # now = time.time()
+            # if now - last_spawn_time >= spawn_interval and len(entities) < max_entities:
+            #     x = random.randint(100, 700)
+            #     y = random.randint(100, 400)
+            #     e = Entity(next_entity_id, x, y, "orb")
+            #     entities[e.id] = e
+            #     next_entity_id += 1
+            #     last_spawn_time = now
+            #     print(f"[SERVER] Spawned entity {e.id} at ({x}, {y})")
 
 
 # handling each on separate thread (optimization)

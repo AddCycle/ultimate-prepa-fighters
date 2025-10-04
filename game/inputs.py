@@ -26,6 +26,8 @@ def handle_inputs(keys, just_pressed_keys, joystick: pygame.joystick.JoystickTyp
         send_msg += "|DOWN"
     if just_pressed_keys[pygame.K_c]:
         send_msg += "|MELEE"
+    if just_pressed_keys[pygame.K_e]:
+        send_msg += "|FIRE"
     
     for e in events:
         if e.type == pygame.JOYBUTTONDOWN:

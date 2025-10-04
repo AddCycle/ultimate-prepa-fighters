@@ -94,7 +94,7 @@ class GameClient:
 
         # draw entities
         for e in all_entities.values():
-            color = "yellow" if e.type_name == "orb" else "white"
+            color = "yellow" if e.type_name == "orb" else "orange"
             pygame.draw.circle(self.screen, color, (int(e.x), int(e.y)), 10)
 
         # hud
@@ -136,6 +136,17 @@ def handle_server_message(line: str, all_players: dict[int, Player], all_entitie
                     del all_players[rid_int]
         return my_id
 
+    if line.startswith("KILL:"):
+        reid = int(line.split(":")[1])
+        if reid in all_entities:
+            del all_entities[reid]
+        print(f"[CLIENT] Entity {reid} removed")
+
+    if line.startswith("SCORE:"):
+        pl, sc = line.split(":")[1].split(",")
+        all_players[int(pl)].score = int(sc)
+        print(f"[CLIENT] Score update for player {int(pl)}...")
+
     for p in line.split(";"):
         if not p:
             continue
@@ -162,6 +173,8 @@ def handle_server_message(line: str, all_players: dict[int, Player], all_entitie
                     e.x = float(parts[2])
                     e.y = float(parts[3])
                     e.type_name = parts[4]
+                    e.vx = int(parts[5])
+                    e.vy = int(parts[6])
         except Exception as e:
             print("Parse error:", p, e)
     return my_id
