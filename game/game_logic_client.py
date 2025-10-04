@@ -1,6 +1,7 @@
 import pygame
 import socket
 from game.player import Player
+from game.entity import Entity
 from game import inputs
 from ui import renderer,menu,hud
 from game.settings import *
@@ -66,7 +67,7 @@ class GameClient:
         if just_pressed_keys[pygame.K_1]:
             self.debug = not self.debug
     
-    def render(self, all_players, bg_img, attack_surface_right, attack_surface_left, arrow_sprite):
+    def render(self, all_players, all_entities, bg_img, attack_surface_right, attack_surface_left, arrow_sprite):
         # draw black
         self.screen.fill("black")
         # draw bg
@@ -91,12 +92,17 @@ class GameClient:
             self.font,
         )
 
+        # draw entities
+        for e in all_entities.values():
+            color = "yellow" if e.type_name == "orb" else "white"
+            pygame.draw.circle(self.screen, color, (int(e.x), int(e.y)), 10)
+
         # hud
         self.hud.render(self.screen)
 
         pygame.display.flip()  # updating screen
     
-    def run(self, all_players: dict[int, Player], client:socket.socket, bg_img, attack_surface_right, attack_surface_left, arrow_sprite):
+    def run(self, all_players: dict[int, Player], all_entities: dict[int, Entity], client:socket.socket, bg_img, attack_surface_right, attack_surface_left, arrow_sprite):
         while self.running:
             events = pygame.event.get()
             # window quit
@@ -105,11 +111,11 @@ class GameClient:
             self.update(all_players, client, events)
 
             # rendering
-            self.render(all_players, bg_img, attack_surface_right, attack_surface_left, arrow_sprite)
+            self.render(all_players, all_entities, bg_img, attack_surface_right, attack_surface_left, arrow_sprite)
 
             self.dt = self.clock.tick(FPS) / 1000
 
-def handle_server_message(line: str, all_players: dict[int, Player], my_id: int | None, char_choice: int):
+def handle_server_message(line: str, all_players: dict[int, Player], all_entities: dict[int, Entity], my_id: int | None, char_choice: int):
     if my_id is None and line.startswith("ID:"):
         pid = int(line.split(":")[1])
         print(f"[CLIENT] Player ID: {pid}")
@@ -136,16 +142,26 @@ def handle_server_message(line: str, all_players: dict[int, Player], my_id: int 
 
         parts = p.split(",")
         try:
-            # received players data parsing
-            pid = int(parts[0])
-            x, y = float(parts[1]), float(parts[2])
-            score = int(parts[3])
-            anim = parts[4]
+            if (parts[0] == "P"):
+                # received players data parsing
+                pid = int(parts[1])
+                x, y = float(parts[2]), float(parts[3])
+                score = int(parts[4])
+                anim = parts[5]
 
-            # create or update Player object based on server data
-            if pid not in all_players:
-                all_players[pid] = Player(pid)  # instantiate with server ID
-            update_player(all_players[pid], x, y, score, anim, char_choice, parts, my_id)
+                # create or update Player object based on server data
+                if pid not in all_players:
+                    all_players[pid] = Player(pid)  # instantiate with server ID
+                update_player(all_players[pid], x, y, score, anim, char_choice, parts, my_id)
+            elif (parts[0] == "E"):
+                eid = int(parts[1])
+                if eid not in all_entities:
+                    all_entities[eid] = Entity.deserialize(parts)
+                else:
+                    e = all_entities[eid]
+                    e.x = float(parts[2])
+                    e.y = float(parts[3])
+                    e.type_name = parts[4]
         except Exception as e:
             print("Parse error:", p, e)
     return my_id
@@ -166,8 +182,8 @@ def update_player(player: Player, x,y,score, anim, server_char_choice, parts, my
     elif "_right" in anim:
         player.facing = "right"
 
-    if len(parts) >= 6:
-        server_char_choice = int(parts[5])
+    if len(parts) >= 7:
+        server_char_choice = int(parts[6])
         if player.char_choice != server_char_choice:
             player.char_choice = server_char_choice
             if player.id == my_id:
@@ -180,8 +196,8 @@ def update_player(player: Player, x,y,score, anim, server_char_choice, parts, my
                 }
                 player.load_sprites(sprite_map[server_char_choice])
 
-    if len(parts) == 10:
-        mx, my, mw, mh = map(float, parts[6:])
+    if len(parts) == 11:
+        mx, my, mw, mh = map(float, parts[7:])
         player.melee_rect = (mx, my, mw, mh)
     else:
         player.melee_rect = None

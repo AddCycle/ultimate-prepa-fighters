@@ -1,7 +1,9 @@
 import threading
 import time
+import random
 from game.settings import *
 from game.player import Player
+from game.entity import Entity
 from network import network
 from game import game_logic
 
@@ -12,6 +14,13 @@ print(f"[SERVER] Listening on UDP port {PORT}")
 
 players: dict[str, Player] = {}  # dict of "addr":Player
 next_id = 0
+
+entities: dict[int, Entity] = {}
+next_entity_id = 1000  # avoid collision with player ids & restart server if too many ids
+
+last_spawn_time = 0
+spawn_interval = 10  # seconds
+
 lock = threading.Lock()
 
 # recv client data function (thread)
@@ -52,6 +61,7 @@ def receive_loop():
 
 # handling client physics (thread)
 def physics_loop():
+    global next_entity_id, last_spawn_time, spawn_interval
     dt = 1 / TICK_RATE
     send_dt = 0
     while True:
@@ -67,8 +77,19 @@ def physics_loop():
             # broadcasting data to each player the everyone state
             send_dt += dt
             if send_dt >= 1 / SEND_RATE:
-                game_logic.broadcast_state(players, server)
+                game_logic.broadcast_state(players, server, entities)
                 send_dt = 0
+            
+            # entities (test) FIXME
+            now = time.time()
+            if now - last_spawn_time >= spawn_interval:
+                x = random.randint(100, 700)
+                y = random.randint(100, 400)
+                e = Entity(next_entity_id, x, y, "orb")
+                entities[e.id] = e
+                next_entity_id += 1
+                last_spawn_time = now
+                print(f"[SERVER] Spawned entity {e.id} at ({x}, {y})")
 
 
 # handling each on separate thread (optimization)

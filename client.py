@@ -5,6 +5,7 @@ import time
 import sys
 from game.settings import *
 from game.player import Player
+from game.entity import Entity
 from ui import menu
 from game import game_logic_client
 from game.game_logic_client import GameClient
@@ -72,6 +73,9 @@ last_alive = time.time()  # for timeout/lost connnection
 all_players: dict[int, Player] = {}
 prev_positions = {}
 
+# all entities local cache
+all_entities: dict[int, Entity] = {}
+
 # dev mode (showing collisions...)
 debug = False
 
@@ -102,7 +106,7 @@ def listen_loop():
 
         while "\n" in buffer:
             line, buffer = buffer.split("\n", 1)
-            my_id = game_logic_client.handle_server_message(line, all_players, my_id, char_choice)
+            my_id = game_logic_client.handle_server_message(line, all_players, all_entities, my_id, char_choice)
 
 # starting listening on another thread (performance optimizing)
 listen_thread = threading.Thread(target=listen_loop)
@@ -128,7 +132,7 @@ while my_id is None:
 
 # GameClient instance
 game = GameClient(screen, server_addr, char_choice, pause_menu, my_id)
-game.run(all_players, client, bg_img, attack_surface_right, attack_surface_left, arrow_sprite) # game loop
+game.run(all_players, all_entities, client, bg_img, attack_surface_right, attack_surface_left, arrow_sprite) # game loop
 
 running = False
 client.sendto(
