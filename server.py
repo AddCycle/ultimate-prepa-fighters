@@ -17,6 +17,7 @@ next_id = 0
 
 entities: dict[int, Entity] = {}
 next_entity_id = 1000  # avoid collision with player ids & restart server if too many ids
+max_entities = 100
 
 last_spawn_time = 0
 spawn_interval = 10  # seconds
@@ -82,7 +83,7 @@ def physics_loop():
             
             # entities (test) FIXME
             now = time.time()
-            if now - last_spawn_time >= spawn_interval:
+            if now - last_spawn_time >= spawn_interval and len(entities) < max_entities:
                 x = random.randint(100, 700)
                 y = random.randint(100, 400)
                 e = Entity(next_entity_id, x, y, "orb")

@@ -196,7 +196,7 @@ def update_player(player: Player, x,y,score, anim, server_char_choice, parts, my
                 }
                 player.load_sprites(sprite_map[server_char_choice])
 
-    if len(parts) == 11:
+    if len(parts) >= 11:
         mx, my, mw, mh = map(float, parts[7:])
         player.melee_rect = (mx, my, mw, mh)
     else:

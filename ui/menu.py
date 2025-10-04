@@ -1,8 +1,6 @@
 import pygame
 from ui.renderer import *
 from ui.button import *
-import sys
-
 
 class Menu:
     def __init__(self, screen: pygame.Surface, title: str) -> None:
@@ -49,6 +47,12 @@ class Menu:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     break
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # left click
+                    for i, btn in enumerate(self.buttons):
+                        if btn.is_hovered(pygame.mouse.get_pos()):
+                            self.choice = i
+                            selecting = False
+                            break
 
             keys = pygame.key.get_just_pressed()
             if keys[pygame.K_DOWN]:
@@ -58,12 +62,18 @@ class Menu:
             elif keys[pygame.K_SPACE]:
                 selecting = False
                 break
-            elif keys[pygame.K_ESCAPE]:
-                pygame.quit()
-                sys.exit()
 
+            mouse_x, mouse_y = pygame.mouse.get_pos()
             self.reset_buttons()
+
+            # keyboard
             self.buttons[self.choice].active = True
+
+            # mouse
+            for i, btn in enumerate(self.buttons):
+                if btn.is_hovered((mouse_x, mouse_y)):
+                    btn.active = True
+                    self.choice = i  # optionally move selection to hovered button
 
             self.screen.fill("black")
 
