@@ -140,12 +140,13 @@ def handle_server_message(line: str, all_players: dict[int, Player], all_entitie
         reid = int(line.split(":")[1])
         if reid in all_entities:
             del all_entities[reid]
-        print(f"[CLIENT] Entity {reid} removed")
+            print(f"[CLIENT] Entity {reid} removed")
 
     if line.startswith("SCORE:"):
         pl, sc = line.split(":")[1].split(",")
-        all_players[int(pl)].score = int(sc)
-        print(f"[CLIENT] Score update for player {int(pl)}...")
+        if pl in all_players:
+            all_players[int(pl)].score = int(sc)
+            print(f"[CLIENT] Score update for player {int(pl)}...")
 
     for p in line.split(";"):
         if not p:
