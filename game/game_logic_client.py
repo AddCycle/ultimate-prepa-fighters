@@ -2,7 +2,7 @@ import pygame
 import socket
 from game.player import Player
 from game import inputs
-from ui import renderer,menu
+from ui import renderer,menu,hud
 from game.settings import *
 
 class GameClient:
@@ -18,22 +18,26 @@ class GameClient:
         self.debug = False
         self.font = pygame.Font("PressStart2P.ttf")
         self.pause_menu: menu.Menu = pause_menu
+        self.hud: hud.Hud = hud.Hud(1)
+        self.joystick = pygame.joystick.Joystick(0)
+        self.joystick.init()
     
-    def handle_events(self):
+    def handle_events(self, events: list[pygame.Event]):
         # when quitting window
-        for event in pygame.event.get():
+        for event in events:
             if event.type == pygame.QUIT:
                 self.running = False
     
-    def update(self, all_players: dict[int, Player], client: socket.socket):
+    def update(self, all_players: dict[int, Player], client: socket.socket, events: list[pygame.Event]):
         # my_id = self.my_id
         # keydown event handling
         keys = pygame.key.get_pressed()
+        
         # one-time pressed keys event
         just_pressed_keys = pygame.key.get_just_pressed()
 
         # command handling
-        send_msg = inputs.handle_inputs(keys, just_pressed_keys)
+        send_msg = inputs.handle_inputs(keys, just_pressed_keys, self.joystick, events)
         # sending local data to server
         if send_msg != self.last_send:
             client.sendto(send_msg.encode(), self.server_addr)
@@ -72,14 +76,18 @@ class GameClient:
             self.font,
         )
 
+        # hud
+        self.hud.render(self.screen)
+
         pygame.display.flip()  # updating screen
     
     def run(self, all_players: dict[int, Player], client:socket.socket, bg_img, attack_surface_right, attack_surface_left, arrow_sprite):
         while self.running:
+            events = pygame.event.get()
             # window quit
-            self.handle_events()
+            self.handle_events(events)
 
-            self.update(all_players, client)
+            self.update(all_players, client, events)
 
             # rendering
             self.render(all_players, bg_img, attack_surface_right, attack_surface_left, arrow_sprite)

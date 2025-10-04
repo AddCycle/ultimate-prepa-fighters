@@ -13,6 +13,7 @@ from game.game_logic_client import GameClient
 pygame.mixer.init()  # music
 pygame.display.init()  # video
 pygame.font.init()  # font
+pygame.joystick.init() # controller
 pygame.init()
 
 # window setup
