@@ -19,7 +19,7 @@ class GameClient:
         self.debug = False
         self.font = pygame.Font("PressStart2P.ttf")
         self.pause_menu: menu.Menu = pause_menu
-        self.hud: hud.Hud = hud.Hud(3)
+        self.hud: hud.Hud = hud.Hud(HEALTH)
         if pygame.joystick.get_count() > 0:
             self.joystick = pygame.joystick.Joystick(0)
             self.joystick.init()

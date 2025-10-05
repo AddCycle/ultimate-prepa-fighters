@@ -14,6 +14,7 @@ GROUND_Y = SCREEN_HEIGHT - PLATFORM_HEIGHT
 JUMP_SPEED = -700
 ENTITY_RADIUS = 16
 PLAYER_RADIUS = 24
+HEALTH=5
 
 # server frequency config consts
 TICK_RATE = 144  # matching client FPS

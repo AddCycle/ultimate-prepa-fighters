@@ -1,6 +1,5 @@
 import pygame
 
-
 # handling inputs returning commands
 def handle_inputs(keys, just_pressed_keys, joystick: pygame.joystick.JoystickType | None, events: list[pygame.Event]) -> str:
     send_msg = "STOP"

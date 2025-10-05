@@ -14,9 +14,12 @@ def handle_command(players: dict[str, Player], entities: dict[int, Entity], next
         print(f"[SERVER] Player {pid} quit")
     elif cmd == "FIRE":
         # spawn near the player
-        e = Entity(next_entity_id, player.x + 50, player.y, "orb")
+        face = 1
+        if player.facing == "left":
+            face = -1
+        e = Entity(next_entity_id, player.x + (50 * face), player.y, "orb")
         # give it a simple velocity (rightwards)
-        e.vx = 200
+        e.vx = 200 * face
         e.vy = 0
         e.caster = player.id # caster id
         entities[e.id] = e

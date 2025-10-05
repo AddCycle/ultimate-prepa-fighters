@@ -22,7 +22,7 @@ class Player:
         self.jump_count = 0
 
         # stats
-        self.health = 30  # FIXME each class a value
+        self.health = HEALTH # FIXME each class a value
         self.speed = random.randint(400, 600)  # FIXME each class a value
         self.facing = "right"  # remembers last facing direction
         self.score = 0
