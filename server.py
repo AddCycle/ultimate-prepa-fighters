@@ -88,8 +88,8 @@ def physics_loop():
                     dx = e.x - p.x
                     dy = e.y - p.y
                     dist_sq = dx * dx + dy * dy
-                    if dist_sq < (ENTITY_RADIUS + PLAYER_RADIUS) ** 2:
-                        print(f"[SERVER] Entity {e.id} hit Player {pid}")
+                    if dist_sq < (ENTITY_RADIUS + PLAYER_RADIUS) ** 2 and p.id != e.caster:
+                        print(f"[SERVER] Entity {e.id} cast by {e.caster}, hit Player {pid}")
                         game_logic.handle_entity_collision(e, p, entities, players, server)
                 if not e.alive:
                     del entities[e.id]
@@ -98,19 +98,6 @@ def physics_loop():
                     for addr in players.keys():
                         kill_msg = f"KILL:{e.id}\n"
                         server.socket.sendto(kill_msg.encode(), addr)
-
-            
-            # entities (test) FIXME
-            # now = time.time()
-            # if now - last_spawn_time >= spawn_interval and len(entities) < max_entities:
-            #     x = random.randint(100, 700)
-            #     y = random.randint(100, 400)
-            #     e = Entity(next_entity_id, x, y, "orb")
-            #     entities[e.id] = e
-            #     next_entity_id += 1
-            #     last_spawn_time = now
-            #     print(f"[SERVER] Spawned entity {e.id} at ({x}, {y})")
-
 
 # handling each on separate thread (optimization)
 threading.Thread(target=receive_loop, daemon=True).start()

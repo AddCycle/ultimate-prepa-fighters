@@ -11,6 +11,7 @@ class Entity:
         self.alive = True
         self.spawn_time = time.time()   # track creation time
         self.lifetime = 5.0             # seconds before despawn
+        self.caster:int|None = None
 
     def update(self, dt: float):
         self.x += self.vx * dt
@@ -28,7 +29,7 @@ class Entity:
             self.type_name = "orb_fading"
 
     def serialize(self):
-        return f"E,{self.id},{self.x},{self.y},{self.type_name},{self.vx},{self.vy}"
+        return f"E,{self.id},{self.x},{self.y},{self.type_name},{self.vx},{self.vy},{self.caster}"
 
     @staticmethod
     def deserialize(parts):
@@ -38,7 +39,9 @@ class Entity:
         y = float(parts[3])
         type_name = parts[4]
         e = Entity(eid, x, y, type_name)
-        if len(parts) >= 7:
+        if len(parts) >= 8:
             e.vx = float(parts[5])
             e.vy = float(parts[6])
+            if parts[7]:
+                e.caster = int(parts[7])
         return e

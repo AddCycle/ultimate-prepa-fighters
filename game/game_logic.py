@@ -18,6 +18,7 @@ def handle_command(players: dict[str, Player], entities: dict[int, Entity], next
         # give it a simple velocity (rightwards)
         e.vx = 200
         e.vy = 0
+        e.caster = player.id # caster id
         entities[e.id] = e
         next_entity_id += 1
         print(f"[SERVER] Player {player.id} summoned entity {e.id}!")
