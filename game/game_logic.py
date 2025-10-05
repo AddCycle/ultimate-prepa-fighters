@@ -97,11 +97,13 @@ def broadcast_state(players: dict[str, Player], server: Server, entities: dict[i
 
 def handle_entity_collision(entity: Entity, player: Player, entities, players: dict[str, Player], server: Server):
     # Example effect: increase score, remove entity
-    player.score += 1
+    for addr, p in players.items():
+        if p.id == entity.caster:
+            p.score += 1
+            print(f"[SERVER] Player {p.id} score: {p.score}")
     entity.alive = False
-    print(f"[SERVER] Player {player.id} score: {player.score}")
 
     # Notify clients
     for addr in players.keys():
-        server.socket.sendto(f"SCORE:{player.id},{player.score}\n".encode(), addr)
+        # server.socket.sendto(f"SCORE:{player.id},{player.score}\n".encode(), addr)
         server.socket.sendto(f"KILL:{entity.id}\n".encode(), addr)

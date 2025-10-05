@@ -90,7 +90,7 @@ def physics_loop():
                     dist_sq = dx * dx + dy * dy
                     if dist_sq < (ENTITY_RADIUS + PLAYER_RADIUS) ** 2 and p.id != e.caster:
                         print(f"[SERVER] Entity {e.id} cast by {e.caster}, hit Player {pid}")
-                        game_logic.handle_entity_collision(e, p, entities, players, server)
+                        game_logic.handle_entity_collision(e, p, entities, players, server) # p: player hit, e: entity
                 if not e.alive:
                     del entities[e.id]
                     print(f"[SERVER] Entity {e.id} expired")

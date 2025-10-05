@@ -31,10 +31,13 @@ def handle_inputs(keys, just_pressed_keys, joystick: pygame.joystick.JoystickTyp
     
     for e in events:
         if e.type == pygame.JOYBUTTONDOWN:
+            print(f"pressed button : {e.button}")
             if e.button == 0:  # A / Cross
                 send_msg += "|JUMP"
             elif e.button == 1:  # B / Circle
                 send_msg += "|MELEE"
+            elif e.button == 2:  # X / Projectile
+                send_msg += "|FIRE"
         elif e.type == pygame.JOYAXISMOTION:
             print("Axis", e.axis, e.value)
     
